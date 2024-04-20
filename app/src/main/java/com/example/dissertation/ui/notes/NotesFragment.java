@@ -85,7 +85,7 @@ public class NotesFragment extends Fragment {
         ArrayList<String> notes = new ArrayList<>();
         noteIds.clear();
         while (cursor.moveToNext()) {
-            int id = cursor.getInt(cursor.getColumnIndex("noteID")); // Make sure "noteID" is spelled correctly
+            int id = cursor.getInt(cursor.getColumnIndex("noteID"));
             String title = cursor.getString(cursor.getColumnIndex("title"));
             String content = cursor.getString(cursor.getColumnIndex("content"));
             notes.add(title + "\n" + content);
