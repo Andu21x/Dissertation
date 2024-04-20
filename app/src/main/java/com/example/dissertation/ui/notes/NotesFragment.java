@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -64,7 +63,7 @@ public class NotesFragment extends Fragment {
     }
 
     private void confirmDeletion(int noteId) {
-        new AlertDialog.Builder(getActivity())
+        new AlertDialog.Builder(requireActivity())
                 .setTitle("Delete Note")
                 .setMessage("Are you sure you want to delete this note?")
                 .setPositiveButton("Delete", (dialog, which) -> deleteNote(noteId))
@@ -97,7 +96,7 @@ public class NotesFragment extends Fragment {
     }
 
     private void showNoteDetails(String noteDetails) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Note Details");
         builder.setMessage(noteDetails);
         builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
