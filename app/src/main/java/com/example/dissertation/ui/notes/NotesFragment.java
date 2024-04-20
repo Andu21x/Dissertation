@@ -6,12 +6,14 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.dissertation.DatabaseHelper;
@@ -46,6 +48,16 @@ public class NotesFragment extends Fragment {
             }
         });
 
+        listViewNotes.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // Get the note details
+                String noteDetails = adapter.getItem(position);
+                // Display the full note
+                showNoteDetails(noteDetails);
+            }
+        });
+
         return view;
     }
 
@@ -62,9 +74,20 @@ public class NotesFragment extends Fragment {
         Cursor cursor = dbHelper.readNoteData();
         ArrayList<String> notes = new ArrayList<>();
         while (cursor.moveToNext()) {
-            notes.add(cursor.getString(cursor.getColumnIndex("title")));
+            String title = cursor.getString(cursor.getColumnIndex("title"));
+            String content = cursor.getString(cursor.getColumnIndex("content"));
+            notes.add(title + "\n" + content);
         }
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
         listViewNotes.setAdapter(adapter);
+    }
+
+    private void showNoteDetails(String noteDetails) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder.setTitle("Note Details");
+        builder.setMessage(noteDetails);
+        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
+        AlertDialog dialog = builder.create();
+        dialog.show();
     }
 }
