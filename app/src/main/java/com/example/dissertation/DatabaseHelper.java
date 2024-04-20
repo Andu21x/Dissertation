@@ -9,10 +9,10 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "myDatabase.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Creating the table
-    private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT)";
+    private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable (noteID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT)";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -26,7 +26,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Handle database upgrade here
+        if (oldVersion < 2) {
+            db.execSQL("DROP TABLE IF EXISTS noteTable");
+            onCreate(db);
+        }
     }
 
     // Insert data
@@ -51,12 +54,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         ContentValues contentValues = new ContentValues();
         contentValues.put("title", title);
         contentValues.put("content", content);
-        db.update("noteTable", contentValues, "id=?", new String[]{String.valueOf(id)});
+        db.update("noteTable", contentValues, "noteID=?", new String[]{String.valueOf(id)});
     }
 
     // Delete data
     public void deleteNoteData(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete("noteTable", "id=?", new String[]{String.valueOf(id)});
+        db.delete("noteTable", "noteID=?", new String[]{String.valueOf(id)});
     }
 }
