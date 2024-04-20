@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editTextBudgetType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Type" />
+
+    <EditText
+        android:id="@+id/editTextBudgetDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Description" />
+
+    <EditText
+        android:id="@+id/editTextBudgetQuantity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Quantity"
+        android:inputType="number" />
+
+    <EditText
+        android:id="@+id/editTextBudgetSellingPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Selling Price"
+        android:inputType="numberDecimal" />
+
+    <Button
+        android:id="@+id/buttonSaveBudget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save Budget" />
+
+    <ListView
+        android:id="@+id/listViewBudgets"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>

@@ -28,4 +28,9 @@
         android:name="com.example.dissertation.ui.notes.NotesFragment"
         android:label="@string/notes"
         tools:layout="@layout/fragment_notes" />
+
+    <fragment android:id="@+id/nav_budget"
+        android:name="com.example.dissertation.ui.budget.BudgetFragment"
+        android:label="@string/budget"
+        tools:layout="@layout/fragment_budget" />
 </navigation>
