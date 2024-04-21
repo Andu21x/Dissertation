@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 
 import com.example.dissertation.DatabaseHelper;
@@ -46,6 +47,12 @@ public class ExpenseFragment extends Fragment {
         listViewExpenses.setAdapter(adapter);
 
         buttonSave.setOnClickListener(v -> saveExpense());
+
+        listViewExpenses.setOnItemLongClickListener((parent, view12, position, id) -> {
+            int expenseId = expenseIds.get(position);  // Retrieve the ID of the expense to delete
+            confirmDeletion(expenseId);
+            return true;
+        });
 
         loadExpenses(); // Load existing expenses to ListView
         return view;
@@ -84,6 +91,21 @@ public class ExpenseFragment extends Fragment {
         adapter.addAll(listItems);
         adapter.notifyDataSetChanged();
         cursor.close();
+    }
+
+    private void deleteExpense(int expenseId) {
+        dbHelper.deleteExpenseData(expenseId);
+        Toast.makeText(getActivity(), "Expense deleted", Toast.LENGTH_SHORT).show();
+        loadExpenses();  // Reload the expenses
+    }
+
+    private void confirmDeletion(int expenseId) {
+        new AlertDialog.Builder(requireActivity())
+                .setTitle("Delete Expense")
+                .setMessage("Are you sure you want to delete this expense entry?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteExpense(expenseId))
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 }
 
