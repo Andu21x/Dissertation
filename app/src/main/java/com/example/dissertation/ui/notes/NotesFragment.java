@@ -3,12 +3,14 @@ package com.example.dissertation.ui.notes;
 import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -44,8 +46,12 @@ public class NotesFragment extends Fragment {
         buttonSave.setOnClickListener(v -> saveNote());
 
         listViewNotes.setOnItemClickListener((parent, view1, position, id) -> {
+            int noteId = noteIds.get(position);
             String noteDetails = adapter.getItem(position);
-            showNoteDetails(noteDetails);
+            String[] parts = noteDetails.split("\n", 2);
+            String title = parts[0];
+            String content = parts.length > 1 ? parts[1] : "";
+            showUpdateDialog(noteId, title, content);
         });
 
         listViewNotes.setOnItemLongClickListener((parent, view12, position, id) -> {
@@ -95,12 +101,43 @@ public class NotesFragment extends Fragment {
         listViewNotes.setAdapter(adapter);
     }
 
-    private void showNoteDetails(String noteDetails) {
+    private void showUpdateDialog(final int noteId, String currentTitle, String currentContent) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setTitle("Note Details");
-        builder.setMessage(noteDetails);
-        builder.setPositiveButton("OK", (dialog, which) -> dialog.dismiss());
-        AlertDialog dialog = builder.create();
-        dialog.show();
+
+        // Set up the input fields
+        EditText editTextTitle = new EditText(getContext());
+        editTextTitle.setInputType(InputType.TYPE_CLASS_TEXT);
+        editTextTitle.setText(currentTitle);
+
+        EditText editTextContent = new EditText(getContext());
+        editTextContent.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        editTextContent.setText(currentContent);
+
+        // Layout to contain the EditText fields (AlertDialog doesn't work like it did for deletion methods)
+        LinearLayout layout = new LinearLayout(getContext());
+
+        layout.addView(editTextTitle);
+        layout.addView(editTextContent);
+
+        layout.setOrientation(LinearLayout.VERTICAL); // They were left and right at first, make it one above the other
+        layout.setPadding(40, 10, 40, 10); // Set padding around the layout
+
+        builder.setView(layout); // Set the view to AlertDialog
+
+        // Set up the buttons
+        builder.setPositiveButton("Update", (dialog, which) -> {
+            String title = editTextTitle.getText().toString();
+            String content = editTextContent.getText().toString();
+            updateNote(noteId, title, content);
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
+    }
+
+    private void updateNote(int noteId, String title, String content) {
+        dbHelper.updateNoteData(noteId, title, content);
+        Toast.makeText(getActivity(), "Note Updated", Toast.LENGTH_SHORT).show();
+        loadNotes();
     }
 }
