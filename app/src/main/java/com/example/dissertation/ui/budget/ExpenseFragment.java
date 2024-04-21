@@ -61,6 +61,7 @@ public class ExpenseFragment extends Fragment {
             String expenseDetails = adapter.getItem(position);
 
             // Parsing the expense details
+            assert expenseDetails != null;
             String[] parts = expenseDetails.split(", ");
             String type = parts[0].substring(parts[0].indexOf(": ") + 2);
             String description = parts[1].substring(parts[1].indexOf(": ") + 2);

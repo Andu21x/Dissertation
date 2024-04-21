@@ -60,6 +60,7 @@ public class BudgetFragment extends Fragment {
             int budgetId = budgetIds.get(position);
             String budgetDetails = adapter.getItem(position);
 
+            assert budgetDetails != null;
             String[] parts = budgetDetails.split(", ");
 
             //Extract only substrings from each segment AFTER colon characters

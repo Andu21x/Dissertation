@@ -49,4 +49,7 @@ dependencies {
     testImplementation libs.junit.v4131
     androidTestImplementation libs.junit.v112
     androidTestImplementation libs.espresso.core.v330
+
+    implementation libs.retrofit
+    implementation libs.converter.gson
 }

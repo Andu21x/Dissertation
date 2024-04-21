@@ -16,4 +16,5 @@
     <string name="save_note">Save Note</string>
     <string name="budget">Budget</string>
     <string name="expenses">Expenses</string>
+    <string name="weather">weather</string>
 </resources>
