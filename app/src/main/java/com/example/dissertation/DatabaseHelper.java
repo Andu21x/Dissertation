@@ -40,13 +40,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // Insert data methods
-    public void insertNoteData(String title, String content) {
+    // Insert data methods for all tables and their respective values
+    public void insertNote(String title, String content) {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("title", title);
-        contentValues.put("content", content);
-        db.insert("noteTable", null, contentValues);
+        ContentValues values = new ContentValues();
+        values.put("title", title);
+        values.put("content", content);
+        db.insert("noteTable", null, values);
     }
 
     public void insertBudget(String type, String description, int quantity, double sellingPrice) {
@@ -72,56 +72,67 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     // Read data methods
-    public Cursor readNoteData() {
+    public Cursor readNote() {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM noteTable";
         return db.rawQuery(query, null);
     }
 
-    public Cursor readBudgetData() {
+    public Cursor readBudget() {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM budgetTable";
         return db.rawQuery(query, null);
     }
 
-    public Cursor readExpenseData() {
+    public Cursor readExpense() {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM expenseTable";
         return db.rawQuery(query, null);
     }
 
     // Update data methods
-    public void updateNoteData(int id, String title, String content) {
+    public void updateNote(int id, String title, String content) {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("title", title);
-        contentValues.put("content", content);
-        db.update("noteTable", contentValues, "noteID=?", new String[]{String.valueOf(id)});
+        ContentValues values = new ContentValues();
+        values.put("title", title);
+        values.put("content", content);
+        db.update("noteTable", values, "noteID=?", new String[]{String.valueOf(id)});
     }
 
-    public void updateExpenseData(int expenseID, String type, String description, int quantity, double expenseValue) {
+    public void updateBudget(int budgetID, String type, String description, int quantity, double sellingPrice, double total) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("type", type);
+        values.put("description", description);
+        values.put("quantity", quantity);
+        values.put("sellingPrice", sellingPrice);
+        values.put("total", total);
+        db.update("budgetTable", values, "budgetID=?", new String[]{String.valueOf(budgetID)});
+    }
+
+    public void updateExpense(int expenseID, String type, String description, int quantity, double expenseValue, double total) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("type", type);
         values.put("description", description);
         values.put("quantity", quantity);
         values.put("expenseValue", expenseValue);
-        values.put("total", quantity * expenseValue);
+        values.put("total", total);
         db.update("expenseTable", values, "expenseID=?", new String[]{String.valueOf(expenseID)});
     }
 
     // Delete data methods
-    public void deleteNoteData(int id) {
+    public void deleteNote(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("noteTable", "noteID=?", new String[]{String.valueOf(id)});
     }
 
-    public void deleteBudgetData(int budgetID) {
+    public void deleteBudget(int budgetID) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("budgetTable", "budgetID=?", new String[]{String.valueOf(budgetID)});
     }
 
-    public void deleteExpenseData(int expenseID) {
+    public void deleteExpense(int expenseID) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("expenseTable", "expenseID=?", new String[]{String.valueOf(expenseID)});
     }
