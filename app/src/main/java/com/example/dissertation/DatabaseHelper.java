@@ -40,7 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // Insert data
+    // Insert data methods
     public void insertNoteData(String title, String content) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -71,7 +71,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.insert("expenseTable", null, values);
     }
 
-    // Read data
+    // Read data methods
     public Cursor readNoteData() {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM noteTable";
@@ -84,7 +84,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.rawQuery(query, null);
     }
 
-    // Update data
+    public Cursor readExpenseData() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM expenseTable";
+        return db.rawQuery(query, null);
+    }
+
+    // Update data methods
     public void updateNoteData(int id, String title, String content) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -93,7 +99,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.update("noteTable", contentValues, "noteID=?", new String[]{String.valueOf(id)});
     }
 
-    // Delete data
+    public void updateExpenseData(int expenseID, String type, String description, int quantity, double expenseValue) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("type", type);
+        values.put("description", description);
+        values.put("quantity", quantity);
+        values.put("expenseValue", expenseValue);
+        values.put("total", quantity * expenseValue);
+        db.update("expenseTable", values, "expenseID=?", new String[]{String.valueOf(expenseID)});
+    }
+
+    // Delete data methods
     public void deleteNoteData(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("noteTable", "noteID=?", new String[]{String.valueOf(id)});
@@ -102,5 +119,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public void deleteBudgetData(int budgetID) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("budgetTable", "budgetID=?", new String[]{String.valueOf(budgetID)});
+    }
+
+    public void deleteExpenseData(int expenseID) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("expenseTable", "expenseID=?", new String[]{String.valueOf(expenseID)});
     }
 }

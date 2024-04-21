@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/editTextExpenseType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Type" />
+
+    <EditText
+        android:id="@+id/editTextExpenseDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Description" />
+
+    <EditText
+        android:id="@+id/editTextExpenseQuantity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Quantity"
+        android:inputType="number" />
+
+    <EditText
+        android:id="@+id/editTextExpenseValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Expense Value"
+        android:inputType="numberDecimal" />
+
+    <Button
+        android:id="@+id/buttonSaveExpense"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save Expense" />
+
+    <ListView
+        android:id="@+id/listViewExpenses"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+</LinearLayout>

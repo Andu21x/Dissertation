@@ -15,4 +15,5 @@
     <string name="content">Content</string>
     <string name="save_note">Save Note</string>
     <string name="budget">Budget</string>
+    <string name="expenses">Expenses</string>
 </resources>
