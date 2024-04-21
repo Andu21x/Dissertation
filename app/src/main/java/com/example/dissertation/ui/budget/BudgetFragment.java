@@ -78,19 +78,41 @@ public class BudgetFragment extends Fragment {
     }
 
     private void saveBudget() {
-        try {
-            String type = editTextType.getText().toString();
-            String description = editTextDescription.getText().toString();
-            int quantity = Integer.parseInt(editTextQuantity.getText().toString());
-            double sellingPrice = Double.parseDouble(editTextSellingPrice.getText().toString());
+        // Make all fields into strings
+        String type = editTextType.getText().toString();
+        String description = editTextDescription.getText().toString();
+        String quantityStr = editTextQuantity.getText().toString();
+        String sellingPriceStr = editTextSellingPrice.getText().toString();
 
-            dbHelper.insertBudget(type, description, quantity, sellingPrice);
-            Toast.makeText(getActivity(), "Budget Saved", Toast.LENGTH_SHORT).show();
-            loadBudgets(); // Reload the budgets
-        } catch (NumberFormatException e) {
-            Toast.makeText(getActivity(), "Please enter valid numbers for quantity and price.", Toast.LENGTH_SHORT).show();
+        // Check if all fields are filled when saveBudget() is called, if they aren't, carry on, otherwise show a toast pop-up alerting the user
+        if (!type.isEmpty() && !description.isEmpty() && !quantityStr.isEmpty() && !sellingPriceStr.isEmpty()) {
+            try {
+                // Change the datatype by parsing the string argument into an int/double
+                int quantity = Integer.parseInt(quantityStr);
+                double sellingPrice = Double.parseDouble(sellingPriceStr);
+
+                // Insert the values into the database table and show a toast pop-up alerting the user
+                dbHelper.insertBudget(type, description, quantity, sellingPrice);
+                Toast.makeText(getActivity(), "Budget Saved", Toast.LENGTH_SHORT).show();
+
+                // Clear all input fields after saving
+                editTextType.setText("");
+                editTextDescription.setText("");
+                editTextQuantity.setText("");
+                editTextSellingPrice.setText("");
+
+                loadBudgets(); // Reload the list of budgets
+
+            } catch (NumberFormatException e) {
+                Toast.makeText(getActivity(), "Invalid number format. Please check your inputs.", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Failed to save budget: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(getActivity(), "All fields are required", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     @SuppressLint("Range")
     private void loadBudgets() {
@@ -119,9 +141,13 @@ public class BudgetFragment extends Fragment {
     }
 
     private void deleteBudget(int budgetId) {
-        dbHelper.deleteBudget(budgetId);
-        Toast.makeText(getActivity(), "Budget deleted", Toast.LENGTH_SHORT).show();
-        loadBudgets();  // Reload the budgets
+        try {
+            dbHelper.deleteBudget(budgetId);
+            Toast.makeText(getActivity(), "Budget deleted", Toast.LENGTH_SHORT).show();
+            loadBudgets(); // Reload the budgets to reflect the deletion
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Failed to delete budget: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void confirmDeletion(int budgetId) {
@@ -168,11 +194,20 @@ public class BudgetFragment extends Fragment {
 
         // Set up the buttons
         builder.setPositiveButton("Update", (dialog, which) -> {
-            String type = editTextType.getText().toString();
-            String description = editTextDescription.getText().toString();
-            int quantity = Integer.parseInt(editTextQuantity.getText().toString()); // Convert Data Type to be compatible with database
-            double sellingPrice = Double.parseDouble(editTextSellingPrice.getText().toString()); // Same here
-            updateBudget(budgetId, type, description, quantity, sellingPrice);
+            try {
+                // Retrieve input and parse numbers
+                String type = editTextType.getText().toString();
+                String description = editTextDescription.getText().toString();
+                int quantity = Integer.parseInt(editTextQuantity.getText().toString());
+                double sellingPrice = Double.parseDouble(editTextSellingPrice.getText().toString());
+
+                // Update budget in the database
+                updateBudget(budgetId, type, description, quantity, sellingPrice);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getActivity(), "Please enter valid numbers for quantity and price.", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
@@ -180,9 +215,16 @@ public class BudgetFragment extends Fragment {
     }
 
     private void updateBudget(int budgetId, String type, String description, int quantity, double sellingPrice) {
-        double total = quantity * sellingPrice;
-        dbHelper.updateBudget(budgetId, type, description, quantity, sellingPrice, total);
-        Toast.makeText(getActivity(), "Budget Updated", Toast.LENGTH_SHORT).show();
-        loadBudgets();
+        try {
+            double total = quantity * sellingPrice;
+
+            dbHelper.updateBudget(budgetId, type, description, quantity, sellingPrice, total);
+            Toast.makeText(getActivity(), "Budget Updated", Toast.LENGTH_SHORT).show();
+
+            loadBudgets(); // Reload the list of budgets
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
+
 }

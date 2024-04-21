@@ -67,9 +67,26 @@ public class NotesFragment extends Fragment {
     private void saveNote() {
         String title = editTextTitle.getText().toString();
         String content = editTextContent.getText().toString();
-        dbHelper.insertNote(title, content);
-        Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
-        loadNotes(); // Reload the notes
+
+        // Check if text fields are not empty when saveNote() is called, if they are, then insert and clear after
+        if (!title.isEmpty() || !content.isEmpty()) {
+            try {
+                // Insert the values into the database table and show a toast pop-up alerting the user
+                dbHelper.insertNote(title, content);
+                Toast.makeText(getActivity(), "Saved", Toast.LENGTH_SHORT).show();
+
+                // Clear all input fields after saving
+                editTextTitle.setText("");
+                editTextContent.setText("");
+
+                loadNotes(); // Reload the notes
+
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Error saving note: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(getActivity(), "Please enter a title or content", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @SuppressLint("Range")
@@ -89,9 +106,13 @@ public class NotesFragment extends Fragment {
     }
 
     private void deleteNote(int noteId) {
-        dbHelper.deleteNote(noteId);
-        Toast.makeText(getActivity(), "Note deleted", Toast.LENGTH_SHORT).show();
-        loadNotes(); // Reload the notes
+        try {
+            dbHelper.deleteNote(noteId);
+            Toast.makeText(getActivity(), "Note deleted", Toast.LENGTH_SHORT).show();
+            loadNotes(); // Reload the list of notes
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Error deleting note: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void confirmDeletion(int noteId) {
@@ -128,18 +149,27 @@ public class NotesFragment extends Fragment {
 
         // Set up the buttons
         builder.setPositiveButton("Update", (dialog, which) -> {
-            String title = editTextTitle.getText().toString();
-            String content = editTextContent.getText().toString();
-            updateNote(noteId, title, content);
+            try {
+                String title = editTextTitle.getText().toString();
+                String content = editTextContent.getText().toString();
+                updateNote(noteId, title, content);
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
         });
+
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
     }
 
     private void updateNote(int noteId, String title, String content) {
-        dbHelper.updateNote(noteId, title, content);
-        Toast.makeText(getActivity(), "Note Updated", Toast.LENGTH_SHORT).show();
-        loadNotes();
+        try {
+            dbHelper.updateNote(noteId, title, content);
+            Toast.makeText(getActivity(), "Note Updated", Toast.LENGTH_SHORT).show();
+            loadNotes(); // Reload the list of notes
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Failed to update note: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 }

@@ -70,49 +70,83 @@ public class ExpenseFragment extends Fragment {
             showUpdateDialog(expenseId, type, description, quantity, expenseValue);
         });
 
-        loadExpenses(); // Load existing expenses to ListView
+        loadExpenses(); // Reload the list of expenses
         return view;
     }
 
     private void saveExpense() {
+        // Make all fields into strings
         String type = editTextType.getText().toString();
         String description = editTextDescription.getText().toString();
-        int quantity = Integer.parseInt(editTextQuantity.getText().toString());
-        double expenseValue = Double.parseDouble(editTextExpenseValue.getText().toString());
+        String quantityStr = editTextQuantity.getText().toString();
+        String expenseValueStr = editTextExpenseValue.getText().toString();
 
-        dbHelper.insertExpense(type, description, quantity, expenseValue);
-        Toast.makeText(getActivity(), "Expense Saved", Toast.LENGTH_SHORT).show();
-        loadExpenses();
+        // Check if all fields are filled when saveExpense() is called, if they aren't, carry on, otherwise show a toast pop-up alerting the user
+        if (!type.isEmpty() && !description.isEmpty() && !quantityStr.isEmpty() && !expenseValueStr.isEmpty()) {
+            try {
+                // Change the datatype by parsing the string argument into an int/double
+                int quantity = Integer.parseInt(quantityStr);
+                double expenseValue = Double.parseDouble(expenseValueStr);
+
+                // Insert the values into the database table and show a toast pop-up alerting the user
+                dbHelper.insertExpense(type, description, quantity, expenseValue);
+                Toast.makeText(getActivity(), "Expense Saved", Toast.LENGTH_SHORT).show();
+
+                // Clear all input fields after saving
+                editTextType.setText("");
+                editTextDescription.setText("");
+                editTextQuantity.setText("");
+                editTextExpenseValue.setText("");
+
+                loadExpenses(); // Reload the list of expenses
+
+            } catch (NumberFormatException e) {
+                // Handle number format exception if parsing fails
+                Toast.makeText(getActivity(), "Invalid number format. Please check your inputs.", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                // Handle other exceptions that might occur during database operations
+                Toast.makeText(getActivity(), "Failed to save expense: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(getActivity(), "All fields are required", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @SuppressLint("Range")
     private void loadExpenses() {
-        Cursor cursor = dbHelper.readExpense();
-        ArrayList<String> listItems = new ArrayList<>();
-        expenseIds.clear();
-        while (cursor.moveToNext()) {
-            int id = cursor.getInt(cursor.getColumnIndex("expenseID"));
-            int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
-            double expenseValue = cursor.getDouble(cursor.getColumnIndex("expenseValue"));
-            double total = cursor.getDouble(cursor.getColumnIndex("total"));
-            String item = "Type: " + cursor.getString(cursor.getColumnIndex("type")) +
-                    ", Desc: " + cursor.getString(cursor.getColumnIndex("description")) +
-                    ", Qty: " + quantity +
-                    ", Expense: $" + expenseValue +
-                    ", Total: $" + total;
-            listItems.add(item);
-            expenseIds.add(id);
+        try (Cursor cursor = dbHelper.readExpense()) {
+            ArrayList<String> listItems = new ArrayList<>();
+            expenseIds.clear();
+            while (cursor.moveToNext()) {
+                int id = cursor.getInt(cursor.getColumnIndex("expenseID"));
+                int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
+                double expenseValue = cursor.getDouble(cursor.getColumnIndex("expenseValue"));
+                double total = cursor.getDouble(cursor.getColumnIndex("total"));
+                String item = "Type: " + cursor.getString(cursor.getColumnIndex("type")) +
+                        ", Desc: " + cursor.getString(cursor.getColumnIndex("description")) +
+                        ", Qty: " + quantity +
+                        ", Expense: $" + expenseValue +
+                        ", Total: $" + total;
+                listItems.add(item);
+                expenseIds.add(id);
+            }
+            adapter.clear();
+            adapter.addAll(listItems);
+            adapter.notifyDataSetChanged();
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Error loading expenses: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        adapter.clear();
-        adapter.addAll(listItems);
-        adapter.notifyDataSetChanged();
-        cursor.close();
     }
 
     private void deleteExpense(int expenseId) {
-        dbHelper.deleteExpense(expenseId);
-        Toast.makeText(getActivity(), "Expense deleted", Toast.LENGTH_SHORT).show();
-        loadExpenses();  // Reload the expenses
+        try {
+            dbHelper.deleteExpense(expenseId);
+            Toast.makeText(getActivity(), "Expense deleted", Toast.LENGTH_SHORT).show();
+
+            loadExpenses();  // Reload the expenses
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Failed to delete expense: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 
     private void confirmDeletion(int expenseId) {
@@ -144,7 +178,7 @@ public class ExpenseFragment extends Fragment {
         editTextExpenseValue.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         editTextExpenseValue.setText(String.valueOf(currentExpenseValue));
 
-        //Layout to contain the EditText fields
+        // Layout to contain the EditText fields
         LinearLayout layout = new LinearLayout(getContext());
 
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -159,22 +193,35 @@ public class ExpenseFragment extends Fragment {
 
         // Set up the buttons
         builder.setPositiveButton("Update", (dialog, which) -> {
-            String type = editTextType.getText().toString();
-            String description = editTextDescription.getText().toString();
-            int quantity = Integer.parseInt(editTextQuantity.getText().toString()); // Convert Data Type to be compatible with database
-            double expenseValue = Double.parseDouble(editTextExpenseValue.getText().toString()); // Same here
-            updateExpense(expenseId, type, description, quantity, expenseValue);
+            try {
+                String type = editTextType.getText().toString();
+                String description = editTextDescription.getText().toString();
+                int quantity = Integer.parseInt(editTextQuantity.getText().toString()); // Convert Data Type to be compatible with database
+                double expenseValue = Double.parseDouble(editTextExpenseValue.getText().toString()); // Same here
+                updateExpense(expenseId, type, description, quantity, expenseValue);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getContext(), "Please enter valid numbers", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(getContext(), "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
         builder.show();
     }
 
+
     private void updateExpense(int expenseId, String type, String description, int quantity, double expenseValue) {
-        double total = quantity * expenseValue;
-        dbHelper.updateExpense(expenseId, type, description, quantity, expenseValue, total);
-        Toast.makeText(getActivity(), "Expense Updated", Toast.LENGTH_SHORT).show();
-        loadExpenses();
+        try {
+            double total = quantity * expenseValue;
+
+            dbHelper.updateExpense(expenseId, type, description, quantity, expenseValue, total);
+            Toast.makeText(getActivity(), "Expense Updated", Toast.LENGTH_SHORT).show();
+
+            loadExpenses(); // Reload the list of expenses
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show(); // Error handling
+        }
     }
 }
 
