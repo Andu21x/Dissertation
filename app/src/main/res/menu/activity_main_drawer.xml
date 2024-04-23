@@ -34,5 +34,10 @@
             android:id="@+id/nav_weather"
             android:title="@string/weather"
             android:icon="@drawable/weather" />
+
+        <item
+            android:id="@+id/nav_task"
+            android:title="@string/task"
+            android:icon="@drawable/task" />
     </group>
 </menu>

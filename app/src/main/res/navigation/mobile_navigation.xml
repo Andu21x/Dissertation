@@ -45,4 +45,10 @@
         android:name="com.example.dissertation.weather.WeatherFragment"
         android:label="Weather"
         tools:layout="@layout/fragment_weather" />
+
+    <fragment
+        android:id="@+id/nav_task"
+        android:name="com.example.dissertation.ui.task.TaskFragment"
+        android:label="Task"
+        tools:layout="@layout/fragment_tasks" />
 </navigation>

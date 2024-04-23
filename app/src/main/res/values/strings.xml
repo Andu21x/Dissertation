@@ -17,4 +17,6 @@
     <string name="budget">Budget</string>
     <string name="expenses">Expenses</string>
     <string name="weather">weather</string>
+    <string name="task">task</string>
+    <string name="add_task">Add Task</string>
 </resources>
