@@ -184,11 +184,11 @@ public class TaskFragment extends Fragment {
         inputTaskDate.setText(getDateString(selectedDate));
 
         EditText inputStartTime = new EditText(getContext());
-        inputStartTime.setInputType(InputType.TYPE_CLASS_NUMBER);
+        inputStartTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
         inputStartTime.setHint("Start Time (HH:mm)");
 
         EditText inputEndTime = new EditText(getContext());
-        inputEndTime.setInputType(InputType.TYPE_CLASS_NUMBER);
+        inputEndTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
         inputEndTime.setHint("End Time (HH:mm)");
 
         EditText inputPriority = new EditText(getContext());
