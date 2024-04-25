@@ -9,12 +9,12 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "myDatabase.db";
-    private static final int DATABASE_VERSION = 6;
+    private static final int DATABASE_VERSION = 7;
 
     // Creating the tables
     private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable (noteID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT)";
 
-    private static final String CREATE_BUDGET_TABLE = "CREATE TABLE budgetTable (budgetID INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, description TEXT, quantity INTEGER, sellingPrice REAL, total REAL)";
+    private static final String CREATE_BUDGET_TABLE = "CREATE TABLE budgetTable (budgetID INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, description TEXT, quantity INTEGER, sellingPrice REAL, total REAL, budgetDate INTEGER)";
 
     private static final String CREATE_EXPENSE_TABLE = "CREATE TABLE expenseTable (expenseID INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, description TEXT, quantity INTEGER, expenseValue REAL, total REAL)";
 
@@ -35,7 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 6) {
+        if (oldVersion < 7) {
             db.execSQL("DROP TABLE IF EXISTS noteTable");
             db.execSQL("DROP TABLE IF EXISTS budgetTable");
             db.execSQL("DROP TABLE IF EXISTS expenseTable");
@@ -60,7 +60,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.insert("noteTable", null, values);
     }
 
-    public void insertBudget(String type, String description, int quantity, double sellingPrice) {
+    public void insertBudget(String type, String description, int quantity, double sellingPrice, long budgetDate) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("type", type);
@@ -68,6 +68,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("quantity", quantity);
         values.put("sellingPrice", sellingPrice);
         values.put("total", quantity * sellingPrice);  // Calculating total
+        values.put("budgetDate", budgetDate);
         db.insert("budgetTable", null, values);
     }
 
@@ -144,6 +145,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
 
+    public Cursor readChart(String tableName, String column) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT " + column + " FROM " + tableName;
+        return db.rawQuery(query, null);
+    }
+
+
 
 
 
@@ -173,7 +181,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.update("noteTable", values, "noteID=?", new String[]{String.valueOf(id)});
     }
 
-    public void updateBudget(int budgetID, String type, String description, int quantity, double sellingPrice, double total) {
+    public void updateBudget(int budgetID, String type, String description, int quantity, double sellingPrice, double total, long budgetDate) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("type", type);
@@ -181,6 +189,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("quantity", quantity);
         values.put("sellingPrice", sellingPrice);
         values.put("total", total);
+        values.put("budgetDate", budgetDate);
         db.update("budgetTable", values, "budgetID=?", new String[]{String.valueOf(budgetID)});
     }
 

@@ -258,7 +258,7 @@ public class TaskFragment extends Fragment {
     }
 
     private String getDateString(long timestamp) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.UK);
         return dateFormat.format(new Date(timestamp));
     }
 

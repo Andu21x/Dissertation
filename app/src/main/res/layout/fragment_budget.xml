@@ -8,28 +8,37 @@
     <EditText
         android:id="@+id/editTextBudgetType"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:hint="Type" />
+
 
     <EditText
         android:id="@+id/editTextBudgetDescription"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:hint="Description" />
 
     <EditText
         android:id="@+id/editTextBudgetQuantity"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:hint="Quantity"
         android:inputType="number" />
 
     <EditText
         android:id="@+id/editTextBudgetSellingPrice"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:hint="Selling Price"
         android:inputType="numberDecimal" />
+
+    <EditText
+        android:id="@+id/editTextBudgetDate"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="Date"
+        android:focusable="false"
+        android:onClick="onSelectDate"/>
 
     <Button
         android:id="@+id/buttonSaveBudget"
@@ -41,4 +50,6 @@
         android:id="@+id/listViewBudgets"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+
 </LinearLayout>

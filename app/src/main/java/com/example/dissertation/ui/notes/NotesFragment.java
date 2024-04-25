@@ -91,19 +91,24 @@ public class NotesFragment extends Fragment {
 
     @SuppressLint("Range")
     private void loadNotes() {
-        Cursor cursor = dbHelper.readNote();
-        ArrayList<String> notes = new ArrayList<>();
-        noteIds.clear();
-        while (cursor.moveToNext()) {
-            int id = cursor.getInt(cursor.getColumnIndex("noteID"));
-            String title = cursor.getString(cursor.getColumnIndex("title"));
-            String content = cursor.getString(cursor.getColumnIndex("content"));
-            notes.add(title + "\n" + content);
-            noteIds.add(id);
+        try {
+            Cursor cursor = dbHelper.readNote();
+            ArrayList<String> notes = new ArrayList<>();
+            noteIds.clear();
+            while (cursor.moveToNext()) {
+                int id = cursor.getInt(cursor.getColumnIndex("noteID"));
+                String title = cursor.getString(cursor.getColumnIndex("title"));
+                String content = cursor.getString(cursor.getColumnIndex("content"));
+                notes.add(title + "\n" + content);
+                noteIds.add(id);
+            }
+            adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
+            listViewNotes.setAdapter(adapter);
+        } catch (Exception e) {
+            Toast.makeText(getActivity(), "Error loading notes: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
-        adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
-        listViewNotes.setAdapter(adapter);
     }
+
 
     private void deleteNote(int noteId) {
         try {

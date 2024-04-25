@@ -1,6 +1,7 @@
 package com.example.dissertation.ui.budget;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.InputType;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -20,15 +22,21 @@ import androidx.fragment.app.Fragment;
 import com.example.dissertation.DatabaseHelper;
 import com.example.dissertation.R;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class BudgetFragment extends Fragment {
 
-    private EditText editTextType, editTextDescription, editTextQuantity, editTextSellingPrice;
+    private EditText editTextType, editTextDescription, editTextQuantity, editTextSellingPrice, editTextBudgetDate;
     private ListView listViewBudgets;
     private ArrayAdapter<String> adapter;
     private ArrayList<Integer> budgetIds;
     private DatabaseHelper dbHelper;
+    private Calendar calendar;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -38,6 +46,7 @@ public class BudgetFragment extends Fragment {
         editTextDescription = view.findViewById(R.id.editTextBudgetDescription);
         editTextQuantity = view.findViewById(R.id.editTextBudgetQuantity);
         editTextSellingPrice = view.findViewById(R.id.editTextBudgetSellingPrice);
+        editTextBudgetDate = view.findViewById(R.id.editTextBudgetDate);
         listViewBudgets = view.findViewById(R.id.listViewBudgets);
         Button buttonSave = view.findViewById(R.id.buttonSaveBudget);
 
@@ -46,12 +55,16 @@ public class BudgetFragment extends Fragment {
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, new ArrayList<>());
         listViewBudgets.setAdapter(adapter);
 
-        loadBudgets();  // Load data early to ensure UI is populated before any user interaction
+        calendar = Calendar.getInstance();
+
+        updateLabel(); // Set current date as default in editTextBudgetDate
+
+        loadBudgets(); // Load data early to ensure UI is populated before any user interaction
 
         buttonSave.setOnClickListener(v -> saveBudget());
 
         listViewBudgets.setOnItemLongClickListener((parent, view12, position, id) -> {
-            int budgetId = budgetIds.get(position);
+            int budgetId = budgetIds.get(position); // Retrieve the ID of the budget to delete
             confirmDeletion(budgetId);
             return true;
         });
@@ -60,10 +73,10 @@ public class BudgetFragment extends Fragment {
             int budgetId = budgetIds.get(position);
             String budgetDetails = adapter.getItem(position);
 
+            // Parsing the budget details
             assert budgetDetails != null;
             String[] parts = budgetDetails.split(", ");
 
-            //Extract only substrings from each segment AFTER colon characters
             String type = parts[0].substring(parts[0].indexOf(": ") + 2);
             String description = parts[1].substring(parts[1].indexOf(": ") + 2);
             String quantityStr = parts[2].substring(parts[2].indexOf(": ") + 2);
@@ -74,6 +87,10 @@ public class BudgetFragment extends Fragment {
 
             showUpdateDialog(budgetId, type, description, quantity, sellingPrice);
         });
+
+        editTextBudgetDate.setOnClickListener(v -> new DatePickerDialog(getContext(), date,
+                calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)).show());
 
         return view;
     }
@@ -91,9 +108,10 @@ public class BudgetFragment extends Fragment {
                 // Change the datatype by parsing the string argument into an int/double
                 int quantity = Integer.parseInt(quantityStr);
                 double sellingPrice = Double.parseDouble(sellingPriceStr);
+                long dateMillis = calendar.getTimeInMillis() / 1000; // Convert to seconds
 
                 // Insert the values into the database table and show a toast pop-up alerting the user
-                dbHelper.insertBudget(type, description, quantity, sellingPrice);
+                dbHelper.insertBudget(type, description, quantity, sellingPrice, dateMillis);
                 Toast.makeText(getActivity(), "Budget Saved", Toast.LENGTH_SHORT).show();
 
                 // Clear all input fields after saving
@@ -105,8 +123,10 @@ public class BudgetFragment extends Fragment {
                 loadBudgets(); // Reload the list of budgets
 
             } catch (NumberFormatException e) {
+                // Handle number format exception if parsing fails
                 Toast.makeText(getActivity(), "Invalid number format. Please check your inputs.", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
+                // Handle other exceptions that might occur during database operations
                 Toast.makeText(getActivity(), "Failed to save budget: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         } else {
@@ -114,12 +134,14 @@ public class BudgetFragment extends Fragment {
         }
     }
 
-
     @SuppressLint("Range")
     private void loadBudgets() {
         try (Cursor cursor = dbHelper.readBudget()) {
+
             ArrayList<String> listItems = new ArrayList<>();
+
             budgetIds.clear();
+
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndex("budgetID"));
                 int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
@@ -145,6 +167,7 @@ public class BudgetFragment extends Fragment {
         try {
             dbHelper.deleteBudget(budgetId);
             Toast.makeText(getActivity(), "Budget deleted", Toast.LENGTH_SHORT).show();
+
             loadBudgets(); // Reload the budgets to reflect the deletion
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Failed to delete budget: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -186,6 +209,7 @@ public class BudgetFragment extends Fragment {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 10, 40, 10); // Set padding around the layout
 
+
         layout.addView(editTextType);
         layout.addView(editTextDescription);
         layout.addView(editTextQuantity);
@@ -196,18 +220,20 @@ public class BudgetFragment extends Fragment {
         // Set up the buttons
         builder.setPositiveButton("Update", (dialog, which) -> {
             try {
-                // Retrieve input and parse numbers
                 String type = editTextType.getText().toString();
                 String description = editTextDescription.getText().toString();
                 int quantity = Integer.parseInt(editTextQuantity.getText().toString());
                 double sellingPrice = Double.parseDouble(editTextSellingPrice.getText().toString());
 
-                // Update budget in the database
-                updateBudget(budgetId, type, description, quantity, sellingPrice);
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.UK);
+                Date date = sdf.parse(editTextBudgetDate.getText().toString());
+                long dateMillis = date.getTime() / 1000;
+
+                updateBudget(budgetId, type, description, quantity, sellingPrice, dateMillis);
             } catch (NumberFormatException e) {
-                Toast.makeText(getActivity(), "Please enter valid numbers for quantity and price.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Please enter valid numbers for quantity and price.", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
-                Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
@@ -215,17 +241,32 @@ public class BudgetFragment extends Fragment {
         builder.show();
     }
 
-    private void updateBudget(int budgetId, String type, String description, int quantity, double sellingPrice) {
-        try {
-            double total = quantity * sellingPrice;
+    private void updateBudget(int budgetId, String type, String description, int quantity, double sellingPrice, long dateMillis) {
+        double total = quantity * sellingPrice; // Calculating total
 
-            dbHelper.updateBudget(budgetId, type, description, quantity, sellingPrice, total);
+        try {
+            dbHelper.updateBudget(budgetId, type, description, quantity, sellingPrice, total, dateMillis);
             Toast.makeText(getActivity(), "Budget Updated", Toast.LENGTH_SHORT).show();
 
-            loadBudgets(); // Reload the list of budgets
+            loadBudgets(); // Reload the list of budgets to reflect the update
         } catch (Exception e) {
-            Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
+    // Listener for date picker dialog
+    DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+        @Override
+        public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+            calendar.set(Calendar.YEAR, year);
+            calendar.set(Calendar.MONTH, monthOfYear);
+            calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            updateLabel();
+        }
+    };
+
+    private void updateLabel() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.UK);
+        editTextBudgetDate.setText(sdf.format(calendar.getTime()));
+    }
 }

@@ -48,6 +48,8 @@ public class ExpenseFragment extends Fragment {
         adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, new ArrayList<String>());
         listViewExpenses.setAdapter(adapter);
 
+        loadExpenses(); // Load data early to ensure UI is populated before any user interaction
+
         buttonSave.setOnClickListener(v -> saveExpense());
 
         listViewExpenses.setOnItemLongClickListener((parent, view12, position, id) -> {
@@ -62,16 +64,17 @@ public class ExpenseFragment extends Fragment {
 
             // Parsing the expense details
             assert expenseDetails != null;
+
             String[] parts = expenseDetails.split(", ");
             String type = parts[0].substring(parts[0].indexOf(": ") + 2);
             String description = parts[1].substring(parts[1].indexOf(": ") + 2);
+
             int quantity = Integer.parseInt(parts[2].substring(parts[2].indexOf(": ") + 2));
             double expenseValue = Double.parseDouble(parts[3].substring(parts[3].indexOf(": $") + 3));
 
             showUpdateDialog(expenseId, type, description, quantity, expenseValue);
         });
 
-        loadExpenses(); // Reload the list of expenses
         return view;
     }
 
@@ -116,8 +119,11 @@ public class ExpenseFragment extends Fragment {
     @SuppressLint("Range")
     private void loadExpenses() {
         try (Cursor cursor = dbHelper.readExpense()) {
+
             ArrayList<String> listItems = new ArrayList<>();
+
             expenseIds.clear();
+
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndex("expenseID"));
                 int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
@@ -144,7 +150,7 @@ public class ExpenseFragment extends Fragment {
             dbHelper.deleteExpense(expenseId);
             Toast.makeText(getActivity(), "Expense deleted", Toast.LENGTH_SHORT).show();
 
-            loadExpenses();  // Reload the expenses
+            loadExpenses();  // Reload the expenses to reflect the deletion
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Failed to delete expense: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -213,13 +219,13 @@ public class ExpenseFragment extends Fragment {
 
 
     private void updateExpense(int expenseId, String type, String description, int quantity, double expenseValue) {
-        try {
-            double total = quantity * expenseValue;
+        double total = quantity * expenseValue; // Calculating total
 
+        try {
             dbHelper.updateExpense(expenseId, type, description, quantity, expenseValue, total);
             Toast.makeText(getActivity(), "Expense Updated", Toast.LENGTH_SHORT).show();
 
-            loadExpenses(); // Reload the list of expenses
+            loadExpenses(); // Reload the list of expenses to reflect the update
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Update failed: " + e.getMessage(), Toast.LENGTH_LONG).show(); // Error handling
         }

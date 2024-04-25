@@ -52,4 +52,7 @@ dependencies {
 
     implementation libs.retrofit
     implementation libs.converter.gson
+    //noinspection UseTomlInstead
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+
 }

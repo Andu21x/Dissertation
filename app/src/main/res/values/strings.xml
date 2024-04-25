@@ -19,4 +19,11 @@
     <string name="weather">weather</string>
     <string name="task">task</string>
     <string name="add_task">Add Task</string>
+    <string name="chart">chart</string>
+    <string-array name="chart_types">
+        <item>Total Revenues</item>
+        <item>Total Expenses</item>
+        <item>Net Profit</item>
+        <item>Net Loss</item>
+    </string-array>
 </resources>
