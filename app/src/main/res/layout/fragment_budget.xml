@@ -5,12 +5,24 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <TextView
+        android:id="@+id/textViewAggregateTotal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Aggregate Total: $0.00"
+        android:textSize="18sp"
+        android:gravity="center"/>
+
+    <Spinner
+        android:id="@+id/spinnerBudgetType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <EditText
         android:id="@+id/editTextBudgetType"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:hint="Type" />
-
 
     <EditText
         android:id="@+id/editTextBudgetDescription"
@@ -38,7 +50,7 @@
         android:layout_height="48dp"
         android:hint="Date"
         android:focusable="false"
-        android:onClick="onSelectDate"/>
+        android:onClick="onSelectDate" />
 
     <Button
         android:id="@+id/buttonSaveBudget"
@@ -50,6 +62,4 @@
         android:id="@+id/listViewBudgets"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-
-
 </LinearLayout>

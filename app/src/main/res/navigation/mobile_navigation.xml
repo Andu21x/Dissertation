@@ -26,19 +26,24 @@
     <fragment
         android:id="@+id/nav_notes"
         android:name="com.example.dissertation.ui.notes.NotesFragment"
-        android:label="@string/notes"
-        tools:layout="@layout/fragment_notes" />
+        android:label="Notes"
+        tools:layout="@layout/fragment_notes">
+
+        <action
+            android:id="@+id/action_notes_to_trash"
+            app:destination="@id/nav_notetrash"/>
+    </fragment>
+
+    <fragment
+        android:id="@+id/nav_notetrash"
+        android:name="com.example.dissertation.ui.notes.NoteTrashFragment"
+        android:label="NoteTrash"
+        tools:layout="@layout/fragment_notetrash"/>
 
     <fragment android:id="@+id/nav_budget"
         android:name="com.example.dissertation.ui.budget.BudgetFragment"
         android:label="@string/budget"
         tools:layout="@layout/fragment_budget" />
-
-    <fragment
-        android:id="@+id/nav_expense"
-        android:name="com.example.dissertation.ui.budget.ExpenseFragment"
-        android:label="Expenses"
-        tools:layout="@layout/fragment_expense" />
 
     <fragment
         android:id="@+id/nav_weather"

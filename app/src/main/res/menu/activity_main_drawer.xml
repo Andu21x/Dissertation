@@ -26,11 +26,6 @@
             android:icon="@drawable/budget" />
 
         <item
-            android:id="@+id/nav_expense"
-            android:title="@string/expenses"
-            android:icon="@drawable/expense" />
-
-        <item
             android:id="@+id/nav_weather"
             android:title="@string/weather"
             android:icon="@drawable/weather" />

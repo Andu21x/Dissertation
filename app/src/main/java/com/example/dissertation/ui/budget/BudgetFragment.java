@@ -14,6 +14,8 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
@@ -22,7 +24,6 @@ import androidx.fragment.app.Fragment;
 import com.example.dissertation.DatabaseHelper;
 import com.example.dissertation.R;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -31,8 +32,10 @@ import java.util.Locale;
 
 public class BudgetFragment extends Fragment {
 
+    private Spinner spinnerType;
     private EditText editTextType, editTextDescription, editTextQuantity, editTextSellingPrice, editTextBudgetDate;
     private ListView listViewBudgets;
+    private TextView textViewAggregateTotal;
     private ArrayAdapter<String> adapter;
     private ArrayList<Integer> budgetIds;
     private DatabaseHelper dbHelper;
@@ -42,6 +45,8 @@ public class BudgetFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_budget, container, false);
 
+        textViewAggregateTotal = view.findViewById(R.id.textViewAggregateTotal);
+        spinnerType = view.findViewById(R.id.spinnerBudgetType);
         editTextType = view.findViewById(R.id.editTextBudgetType);
         editTextDescription = view.findViewById(R.id.editTextBudgetDescription);
         editTextQuantity = view.findViewById(R.id.editTextBudgetQuantity);
@@ -92,12 +97,15 @@ public class BudgetFragment extends Fragment {
                 calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)).show());
 
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_item, new String[]{"Budget", "Expense"});
+        spinnerType.setAdapter(typeAdapter);
+
         return view;
     }
 
     private void saveBudget() {
         // Make all fields into strings
-        String type = editTextType.getText().toString();
+        String type = spinnerType.getSelectedItem().toString();
         String description = editTextDescription.getText().toString();
         String quantityStr = editTextQuantity.getText().toString();
         String sellingPriceStr = editTextSellingPrice.getText().toString();
@@ -109,6 +117,11 @@ public class BudgetFragment extends Fragment {
                 int quantity = Integer.parseInt(quantityStr);
                 double sellingPrice = Double.parseDouble(sellingPriceStr);
                 long dateMillis = calendar.getTimeInMillis() / 1000; // Convert to seconds
+
+                // When it's an expense, transform it into a negative number
+                if ("Expense".equals(type)) {
+                    sellingPrice = -sellingPrice;
+                }
 
                 // Insert the values into the database table and show a toast pop-up alerting the user
                 dbHelper.insertBudget(type, description, quantity, sellingPrice, dateMillis);
@@ -142,22 +155,30 @@ public class BudgetFragment extends Fragment {
 
             budgetIds.clear();
 
+            double totalSum = 0;
+
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndex("budgetID"));
                 int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
                 double sellingPrice = cursor.getDouble(cursor.getColumnIndex("sellingPrice"));
                 double total = cursor.getDouble(cursor.getColumnIndex("total"));
+
                 String item = "Type: " + cursor.getString(cursor.getColumnIndex("type")) +
                         ", Desc: " + cursor.getString(cursor.getColumnIndex("description")) +
                         ", Qty: " + quantity +
                         ", Price: $" + sellingPrice +
                         ", Total: $" + total;
+
                 listItems.add(item);
                 budgetIds.add(id);
+
+                totalSum += total;
             }
             adapter.clear();
             adapter.addAll(listItems);
             adapter.notifyDataSetChanged();
+
+            textViewAggregateTotal.setText("Aggregate Total: $" + totalSum);
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Error loading budgets: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -228,6 +249,11 @@ public class BudgetFragment extends Fragment {
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.UK);
                 Date date = sdf.parse(editTextBudgetDate.getText().toString());
                 long dateMillis = date.getTime() / 1000;
+
+                // Do the same we did above, but on update
+                if ("Expense".equals(type)) {
+                    sellingPrice = -sellingPrice;
+                }
 
                 updateBudget(budgetId, type, description, quantity, sellingPrice, dateMillis);
             } catch (NumberFormatException e) {

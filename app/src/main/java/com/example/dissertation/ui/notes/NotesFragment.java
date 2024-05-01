@@ -12,15 +12,21 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
 
 import com.example.dissertation.DatabaseHelper;
 import com.example.dissertation.R;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 
 public class NotesFragment extends Fragment {
 
@@ -38,6 +44,7 @@ public class NotesFragment extends Fragment {
         editTextContent = view.findViewById(R.id.editTextContent);
         listViewNotes = view.findViewById(R.id.listViewNotes);
         Button buttonSave = view.findViewById(R.id.buttonSave);
+        Button buttonTrash = view.findViewById(R.id.buttonTrash);
         noteIds = new ArrayList<>();
 
         dbHelper = new DatabaseHelper(getActivity());
@@ -46,6 +53,9 @@ public class NotesFragment extends Fragment {
 
         buttonSave.setOnClickListener(v -> saveNote());
 
+        buttonTrash.setOnClickListener(v -> openTrash());
+
+        // Click listener for updating a note
         listViewNotes.setOnItemClickListener((parent, view1, position, id) -> {
             int noteId = noteIds.get(position);
             String noteDetails = adapter.getItem(position);
@@ -56,6 +66,7 @@ public class NotesFragment extends Fragment {
             showUpdateDialog(noteId, title, content);
         });
 
+        // Long click listener for deleting a note
         listViewNotes.setOnItemLongClickListener((parent, view12, position, id) -> {
             confirmDeletion(noteIds.get(position));
             return true;
@@ -109,7 +120,6 @@ public class NotesFragment extends Fragment {
         }
     }
 
-
     private void deleteNote(int noteId) {
         try {
             dbHelper.deleteNote(noteId);
@@ -129,8 +139,21 @@ public class NotesFragment extends Fragment {
                 .show();
     }
 
+    @SuppressLint({"Range", "SetTextI18n"})
     private void showUpdateDialog(final int noteId, String currentTitle, String currentContent) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+
+        Cursor cursor = dbHelper.readNote();
+        cursor.moveToFirst();
+
+        long creationDate = cursor.getLong(cursor.getColumnIndex("creationDate"));
+        long editDate = cursor.getLong(cursor.getColumnIndex("editDate"));
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK);
+        String creationDateString = sdf.format(new Date(creationDate * 1000)); // Convert to milliseconds
+        String editDateString = sdf.format(new Date(editDate * 1000)); // Convert to milliseconds
+
+        cursor.close();
 
         // Set up the input fields
         EditText editTextTitle = new EditText(getContext());
@@ -141,14 +164,23 @@ public class NotesFragment extends Fragment {
         editTextContent.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         editTextContent.setText(currentContent);
 
-        // Layout to contain the EditText fields (AlertDialog doesn't work like it did for deletion methods)
+        // TextViews for showing creation and edit dates
+        TextView creationDateTextView = new TextView(getContext());
+        creationDateTextView.setText("Created: " + creationDateString);
+
+        TextView editDateTextView = new TextView(getContext());
+        editDateTextView.setText("Last Edited: " + editDateString);
+
+        // Layout to contain the EditText fields
         LinearLayout layout = new LinearLayout(getContext());
 
-        layout.setOrientation(LinearLayout.VERTICAL); // They were left and right at first, make it one above the other
+        layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 10, 40, 10); // Set padding around the layout
 
         layout.addView(editTextTitle);
         layout.addView(editTextContent);
+        layout.addView(creationDateTextView);
+        layout.addView(editDateTextView);
 
         builder.setView(layout); // Set the view to AlertDialog
 
@@ -176,5 +208,10 @@ public class NotesFragment extends Fragment {
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Failed to update note: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void openTrash() {
+        NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment_content_main);
+        navController.navigate(R.id.action_notes_to_trash);
     }
 }

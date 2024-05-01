@@ -80,9 +80,6 @@ public class ChartFragment extends Fragment {
             case 0: // Total Revenues
                 loadChartData("budgetTable", "total");
                 break;
-            case 1: // Total Expenses, didn't implement yet, will do next development day
-                loadChartData("expenseTable", "total");
-                break;
         }
     }
 }
