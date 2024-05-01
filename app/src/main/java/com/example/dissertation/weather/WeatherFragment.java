@@ -6,6 +6,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,15 +35,32 @@ public class WeatherFragment extends Fragment {
         temperatureTextView = root.findViewById(R.id.temperature_text_view);
         weatherDescriptionTextView = root.findViewById(R.id.weather_description_text_view);
 
+        // Initialize OpenWeatherMapService
         openWeatherMapService = ApiClient.getInstance().create(OpenWeatherMapService.class);
-        loadWeatherData();
+
+        Button buttonFetchWeather = root.findViewById(R.id.buttonFetchWeather);
+        buttonFetchWeather.setOnClickListener(v -> {
+            String city = ((AutoCompleteTextView) root.findViewById(R.id.autoCompleteCityTextView)).getText().toString();
+            if (!city.isEmpty()) {
+                loadWeatherData(city);
+            } else {
+                Toast.makeText(getContext(), "Please enter a city name", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         return root;
     }
 
-    private void loadWeatherData() {
+    private void loadWeatherData(String city) {
         String apiKey = "83eb8c7321549e147b8d74d3c9796331";
-        openWeatherMapService.getCurrentWeatherData("London", apiKey).enqueue(new Callback<WeatherData>() {
+
+        if (openWeatherMapService == null) {
+            Log.e("WeatherError", "OpenWeatherMapService is not initialized.");
+            showErrorToast();
+            return;
+        }
+
+        openWeatherMapService.getCurrentWeatherData(city, apiKey).enqueue(new Callback<WeatherData>() {
             @Override
             public void onResponse(@NonNull Call<WeatherData> call, @NonNull Response<WeatherData> response) {
                 if (response.isSuccessful()) {
