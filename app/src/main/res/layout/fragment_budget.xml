@@ -49,8 +49,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:hint="Date"
-        android:focusable="false"
-        android:onClick="onSelectDate" />
+        android:focusable="false"/>
 
     <Button
         android:id="@+id/buttonSaveBudget"

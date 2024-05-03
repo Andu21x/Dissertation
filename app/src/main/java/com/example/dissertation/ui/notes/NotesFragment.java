@@ -31,23 +31,25 @@ import java.util.Locale;
 public class NotesFragment extends Fragment {
 
     private EditText editTextTitle, editTextContent;
-    private ListView listViewNotes;
     private ArrayAdapter<String> adapter;
     private DatabaseHelper dbHelper;
     private ArrayList<Integer> noteIds;
 
     @Override
+    @SuppressLint("Range")
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_notes, container, false);
 
         editTextTitle = view.findViewById(R.id.editTextTitle);
         editTextContent = view.findViewById(R.id.editTextContent);
-        listViewNotes = view.findViewById(R.id.listViewNotes);
+        ListView listViewNotes = view.findViewById(R.id.listViewNotes);
         Button buttonSave = view.findViewById(R.id.buttonSave);
         Button buttonTrash = view.findViewById(R.id.buttonTrash);
-        noteIds = new ArrayList<>();
 
         dbHelper = new DatabaseHelper(getActivity());
+        noteIds = new ArrayList<>();
+        adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, new ArrayList<>());
+        listViewNotes.setAdapter(adapter);
 
         loadNotes();  // Load data early to ensure UI is populated before any user interaction
 
@@ -58,12 +60,15 @@ public class NotesFragment extends Fragment {
         // Click listener for updating a note
         listViewNotes.setOnItemClickListener((parent, view1, position, id) -> {
             int noteId = noteIds.get(position);
-            String noteDetails = adapter.getItem(position);
-            assert noteDetails != null;
-            String[] parts = noteDetails.split("\n", 2);
-            String title = parts[0];
-            String content = parts.length > 1 ? parts[1] : "";
-            showUpdateDialog(noteId, title, content);
+            try (Cursor cursor = dbHelper.readNoteById(noteId)) {
+                if (cursor.moveToFirst()) {
+                    String title = cursor.getString(cursor.getColumnIndex("title"));
+                    String content = cursor.getString(cursor.getColumnIndex("content"));
+                    showUpdateDialog(noteId, title, content);
+                }
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Error loading note: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
         });
 
         // Long click listener for deleting a note
@@ -102,8 +107,7 @@ public class NotesFragment extends Fragment {
 
     @SuppressLint("Range")
     private void loadNotes() {
-        try {
-            Cursor cursor = dbHelper.readNote();
+        try (Cursor cursor = dbHelper.readNote()) {
             ArrayList<String> notes = new ArrayList<>();
             noteIds.clear();
             while (cursor.moveToNext()) {
@@ -113,8 +117,9 @@ public class NotesFragment extends Fragment {
                 notes.add(title + "\n" + content);
                 noteIds.add(id);
             }
-            adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
-            listViewNotes.setAdapter(adapter);
+            adapter.clear();
+            adapter.addAll(notes);
+            adapter.notifyDataSetChanged();
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Error loading notes: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -124,6 +129,7 @@ public class NotesFragment extends Fragment {
         try {
             dbHelper.deleteNote(noteId);
             Toast.makeText(getActivity(), "Note deleted", Toast.LENGTH_SHORT).show();
+
             loadNotes(); // Reload the list of notes
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Error deleting note: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -156,11 +162,11 @@ public class NotesFragment extends Fragment {
         cursor.close();
 
         // Set up the input fields
-        EditText editTextTitle = new EditText(getContext());
+        editTextTitle = new EditText(getContext());
         editTextTitle.setInputType(InputType.TYPE_CLASS_TEXT);
         editTextTitle.setText(currentTitle);
 
-        EditText editTextContent = new EditText(getContext());
+        editTextContent = new EditText(getContext());
         editTextContent.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
         editTextContent.setText(currentContent);
 
@@ -204,6 +210,7 @@ public class NotesFragment extends Fragment {
         try {
             dbHelper.updateNote(noteId, title, content);
             Toast.makeText(getActivity(), "Note Updated", Toast.LENGTH_SHORT).show();
+
             loadNotes(); // Reload the list of notes
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Failed to update note: " + e.getMessage(), Toast.LENGTH_LONG).show();

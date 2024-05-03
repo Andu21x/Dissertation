@@ -34,13 +34,13 @@ public class BudgetFragment extends Fragment {
 
     private Spinner spinnerType;
     private EditText editTextType, editTextDescription, editTextQuantity, editTextSellingPrice, editTextBudgetDate;
-    private ListView listViewBudgets;
     private TextView textViewAggregateTotal;
     private ArrayAdapter<String> adapter;
     private ArrayList<Integer> budgetIds;
     private DatabaseHelper dbHelper;
     private Calendar calendar;
 
+    @SuppressLint("Range")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_budget, container, false);
@@ -52,7 +52,7 @@ public class BudgetFragment extends Fragment {
         editTextQuantity = view.findViewById(R.id.editTextBudgetQuantity);
         editTextSellingPrice = view.findViewById(R.id.editTextBudgetSellingPrice);
         editTextBudgetDate = view.findViewById(R.id.editTextBudgetDate);
-        listViewBudgets = view.findViewById(R.id.listViewBudgets);
+        ListView listViewBudgets = view.findViewById(R.id.listViewBudgets);
         Button buttonSave = view.findViewById(R.id.buttonSaveBudget);
 
         dbHelper = new DatabaseHelper(getActivity());
@@ -69,28 +69,25 @@ public class BudgetFragment extends Fragment {
         buttonSave.setOnClickListener(v -> saveBudget());
 
         listViewBudgets.setOnItemLongClickListener((parent, view12, position, id) -> {
-            int budgetId = budgetIds.get(position); // Retrieve the ID of the budget to delete
-            confirmDeletion(budgetId);
+            confirmDeletion(budgetIds.get(position)); // Retrieve the ID of the budget to delete
             return true;
         });
 
         listViewBudgets.setOnItemClickListener((parent, view1, position, id) -> {
             int budgetId = budgetIds.get(position);
-            String budgetDetails = adapter.getItem(position);
 
-            // Parsing the budget details
-            assert budgetDetails != null;
-            String[] parts = budgetDetails.split(", ");
+            try (Cursor cursor = dbHelper.readBudgetById(budgetId)) {
+                if (cursor.moveToFirst()) {
+                    String type = cursor.getString(cursor.getColumnIndex("type"));
+                    String description = cursor.getString(cursor.getColumnIndex("description"));
+                    int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
+                    double sellingPrice = cursor.getDouble(cursor.getColumnIndex("sellingPrice"));
 
-            String type = parts[0].substring(parts[0].indexOf(": ") + 2);
-            String description = parts[1].substring(parts[1].indexOf(": ") + 2);
-            String quantityStr = parts[2].substring(parts[2].indexOf(": ") + 2);
-            String sellingPriceStr = parts[3].substring(parts[3].indexOf(": $") + 3);
-
-            int quantity = Integer.parseInt(quantityStr);
-            double sellingPrice = Double.parseDouble(sellingPriceStr);
-
-            showUpdateDialog(budgetId, type, description, quantity, sellingPrice);
+                    showUpdateDialog(budgetId, type, description, quantity, sellingPrice);
+                }
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Error loading budget: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
         });
 
         editTextBudgetDate.setOnClickListener(v -> new DatePickerDialog(getContext(), date,
@@ -147,11 +144,11 @@ public class BudgetFragment extends Fragment {
         }
     }
 
-    @SuppressLint("Range")
+    @SuppressLint({"Range", "SetTextI18n"})
     private void loadBudgets() {
         try (Cursor cursor = dbHelper.readBudget()) {
 
-            ArrayList<String> listItems = new ArrayList<>();
+            ArrayList<String> listBudgets = new ArrayList<>();
 
             budgetIds.clear();
 
@@ -162,20 +159,22 @@ public class BudgetFragment extends Fragment {
                 int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
                 double sellingPrice = cursor.getDouble(cursor.getColumnIndex("sellingPrice"));
                 double total = cursor.getDouble(cursor.getColumnIndex("total"));
+                String type = cursor.getString(cursor.getColumnIndex("type"));
+                String description = cursor.getString(cursor.getColumnIndex("description"));
 
-                String item = "Type: " + cursor.getString(cursor.getColumnIndex("type")) +
-                        ", Desc: " + cursor.getString(cursor.getColumnIndex("description")) +
+                String budget = "Type: " + type +
+                        ", Desc: " + description +
                         ", Qty: " + quantity +
                         ", Price: $" + sellingPrice +
                         ", Total: $" + total;
 
-                listItems.add(item);
+                listBudgets.add(budget);
                 budgetIds.add(id);
 
                 totalSum += total;
             }
             adapter.clear();
-            adapter.addAll(listItems);
+            adapter.addAll(listBudgets);
             adapter.notifyDataSetChanged();
 
             textViewAggregateTotal.setText("Aggregate Total: $" + totalSum);
@@ -208,19 +207,19 @@ public class BudgetFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
 
         // Set up the input fields
-        EditText editTextType = new EditText(getContext());
+        editTextType = new EditText(getContext());
         editTextType.setInputType(InputType.TYPE_CLASS_TEXT);
         editTextType.setText(currentType);
 
-        EditText editTextDescription = new EditText(getContext());
+        editTextDescription = new EditText(getContext());
         editTextDescription.setInputType(InputType.TYPE_CLASS_TEXT);
         editTextDescription.setText(currentDescription);
 
-        EditText editTextQuantity = new EditText(getContext());
+        editTextQuantity = new EditText(getContext());
         editTextQuantity.setInputType(InputType.TYPE_CLASS_NUMBER);
         editTextQuantity.setText(String.valueOf(currentQuantity));
 
-        EditText editTextSellingPrice = new EditText(getContext());
+        editTextSellingPrice = new EditText(getContext());
         editTextSellingPrice.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         editTextSellingPrice.setText(String.valueOf(currentSellingPrice));
 
@@ -229,7 +228,6 @@ public class BudgetFragment extends Fragment {
 
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 10, 40, 10); // Set padding around the layout
-
 
         layout.addView(editTextType);
         layout.addView(editTextDescription);

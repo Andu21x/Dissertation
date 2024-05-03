@@ -21,6 +21,7 @@
     <string name="chart">chart</string>
     <string name="view_deleted_notes">View Deleted Notes</string>
     <string name="back_to_notes">Back to Notes</string>
+    <string name="inventory">Inventory</string>
     <string-array name="chart_types">
         <item>Total Revenues</item>
         <item>Net Profit</item>
