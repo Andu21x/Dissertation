@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "myDatabase.db";
-    private static final int DATABASE_VERSION = 15;
+    private static final int DATABASE_VERSION = 16;
 
     // Creating the tables
     private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable (noteID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, creationDate INTEGER, editDate INTEGER, deletedDate INTEGER)";
@@ -35,7 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 15) {
+        if (oldVersion < 16) {
             db.execSQL("DROP TABLE IF EXISTS noteTable");
             db.execSQL("DROP TABLE IF EXISTS budgetTable");
             db.execSQL("DROP TABLE IF EXISTS taskTable");
@@ -132,7 +132,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Cursor readNoteById(int noteId) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM notes WHERE noteID = ?";
+        String query = "SELECT * FROM noteTable WHERE noteID = ?";
         return db.rawQuery(query, new String[]{String.valueOf(noteId)});
     }
 
@@ -150,7 +150,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Cursor readBudgetById(int budgetId) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT * FROM budgets WHERE budgetID = ?";
+        String query = "SELECT * FROM budgetTable WHERE budgetID = ?";
         return db.rawQuery(query, new String[]{String.valueOf(budgetId)});
     }
 
@@ -175,7 +175,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public Cursor readItemByID(int itemID) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM items WHERE itemID = ?", new String[]{String.valueOf(itemID)});
+        String query = "SELECT * FROM inventoryTable WHERE itemID = ?";
+        return db.rawQuery(query, new String[]{String.valueOf(itemID)});
     }
 
     public Cursor readFilteredItems(String type, String subtype) {

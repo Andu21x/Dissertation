@@ -37,8 +37,6 @@ public class TaskFragment extends Fragment {
     private ArrayAdapter<String> adapter;
     private final ArrayList<String> taskList = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-    private EditText inputTitle, inputDescription, inputTaskDate, inputStartTime, inputEndTime, inputPriority, inputCompleted;
-    private Spinner spinnerType;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -64,12 +62,9 @@ public class TaskFragment extends Fragment {
         });
 
         listViewTasks.setOnItemClickListener((parent, view1, position, id) -> {
-            try (Cursor cursor = dbHelper.readTask(selectedDate, selectedDate + DAY_IN_MILLIS - 1)) {
-                if (cursor.moveToPosition(position)) {
-                    showUpdateDialog(cursor);
-                }
-            } catch (Exception e) {
-                Toast.makeText(getActivity(), "Error loading task: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Cursor cursor = dbHelper.readTask(selectedDate, selectedDate + DAY_IN_MILLIS - 1);
+            if (cursor != null && cursor.moveToPosition(position)) {
+                showUpdateDialog(cursor);
             }
         });
 
@@ -77,12 +72,12 @@ public class TaskFragment extends Fragment {
     }
 
     @SuppressLint("Range")
-    private void saveTask(Cursor cursor, EditText inputTitle, EditText inputDescription, Spinner spinnerType, long selectedDate, EditText inputStartTime, EditText inputEndTime, EditText inputPriority, EditText inputCompleted) {
+    private void saveTask(Cursor cursor, EditText inputTitle, EditText inputDescription, Spinner typeSpinner, long selectedDate, EditText inputStartTime, EditText inputEndTime, EditText inputPriority, EditText inputCompleted) {
         int taskID = cursor != null ? cursor.getInt(cursor.getColumnIndex("taskID")) : -1;
 
         String title = inputTitle.getText().toString();
         String description = inputDescription.getText().toString();
-        String type = spinnerType.getSelectedItem().toString();
+        String type = typeSpinner.getSelectedItem().toString();
         long startTime = parseTime(inputStartTime.getText().toString());
         long endTime = parseTime(inputEndTime.getText().toString());
 
@@ -168,44 +163,50 @@ public class TaskFragment extends Fragment {
         builder.setTitle(cursor == null ? "Add New Task" : "Edit Task");
 
         // Set up the input fields
-        inputTitle = new EditText(getContext());
+        EditText inputTitle = new EditText(getContext());
         inputTitle.setInputType(InputType.TYPE_CLASS_TEXT);
         inputTitle.setHint("Title");
-        inputTitle.setText(cursor.getString(cursor.getColumnIndex("title")));
+        if (cursor != null) {
+            inputTitle.setText(cursor.getString(cursor.getColumnIndex("title")));
+        }
 
-        inputDescription = new EditText(getContext());
+        EditText inputDescription = new EditText(getContext());
         inputDescription.setInputType(InputType.TYPE_CLASS_TEXT);
         inputDescription.setHint("Description");
-        inputDescription.setText(cursor.getString(cursor.getColumnIndex("description")));
+        if (cursor != null) {
+            inputDescription.setText(cursor.getString(cursor.getColumnIndex("description")));
+        }
 
-        inputTaskDate = new EditText(getContext());
+        EditText inputTaskDate = new EditText(getContext());
         inputTaskDate.setInputType(InputType.TYPE_NULL);
         inputTaskDate.setFocusable(false);
         inputTaskDate.setHint("Task Date");
         inputTaskDate.setText(getDateString(selectedDate));
 
-        inputStartTime = new EditText(getContext());
+        EditText inputStartTime = new EditText(getContext());
         inputStartTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
         inputStartTime.setHint("Start Time (HH:mm)");
 
-        inputEndTime = new EditText(getContext());
+        EditText inputEndTime = new EditText(getContext());
         inputEndTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
         inputEndTime.setHint("End Time (HH:mm)");
 
-        inputPriority = new EditText(getContext());
+        EditText inputPriority = new EditText(getContext());
         inputPriority.setInputType(InputType.TYPE_CLASS_NUMBER);
         inputPriority.setHint("Priority (1 to 3)");
 
-        inputCompleted = new EditText(getContext());
+        EditText inputCompleted = new EditText(getContext());
         inputCompleted.setInputType(InputType.TYPE_CLASS_NUMBER);
         inputCompleted.setHint("Completed? (0 or 1)");
 
         // Set up spinner to show up a menu when user clicks on type
-        spinnerType = new Spinner(getContext());
+        Spinner typeSpinner = new Spinner(getContext());
         ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new String[]{"Task", "Event", "Other"});
-        spinnerType.setAdapter(typeAdapter);
-        int position = typeAdapter.getPosition(cursor.getString(cursor.getColumnIndex("type")));
-        spinnerType.setSelection(position);
+        typeSpinner.setAdapter(typeAdapter);
+        if (cursor != null) {
+            int position = typeAdapter.getPosition(cursor.getString(cursor.getColumnIndex("type")));
+            typeSpinner.setSelection(position);
+        }
 
         // Layout to contain the EditText fields
         LinearLayout layout = new LinearLayout(getContext());
@@ -214,7 +215,7 @@ public class TaskFragment extends Fragment {
 
         layout.addView(inputTitle);
         layout.addView(inputDescription);
-        layout.addView(spinnerType);
+        layout.addView(typeSpinner);
         layout.addView(inputTaskDate);
         layout.addView(inputStartTime);
         layout.addView(inputEndTime);
@@ -224,11 +225,13 @@ public class TaskFragment extends Fragment {
         builder.setView(layout); // Set the view to AlertDialog
 
         // Set up the buttons
-        builder.setPositiveButton(cursor == null ? "Add" : "Update", (dialog, which) -> saveTask(cursor, inputTitle, inputDescription, spinnerType, selectedDate, inputStartTime, inputEndTime, inputPriority, inputCompleted));
+        builder.setPositiveButton(cursor == null ? "Add" : "Update", (dialog, which) -> saveTask(cursor, inputTitle, inputDescription, typeSpinner, selectedDate, inputStartTime, inputEndTime, inputPriority, inputCompleted));
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
-        builder.setNeutralButton("Delete", (dialog, which) -> confirmDeletion(cursor.getInt(cursor.getColumnIndex("taskID"))));
+        if (cursor != null) {
+            builder.setNeutralButton("Delete", (dialog, which) -> confirmDeletion(cursor.getInt(cursor.getColumnIndex("taskID"))));
+        }
 
         builder.show();
     }
