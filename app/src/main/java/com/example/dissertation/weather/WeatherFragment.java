@@ -19,6 +19,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.example.dissertation.DatabaseHelper;
 import com.example.dissertation.R;
 
 import java.util.Arrays;
@@ -33,18 +34,17 @@ import retrofit2.Response;
 public class WeatherFragment extends Fragment {
 
     private TextView weatherDescriptionTextView;
-
     private OpenWeatherMapService openWeatherMapService;
-
     private Calendar selectedDateTime = Calendar.getInstance();
+    private DatabaseHelper dbHelper;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View root = inflater.inflate(R.layout.fragment_weather, container, false);
+        View view = inflater.inflate(R.layout.fragment_weather, container, false);
 
-        weatherDescriptionTextView = root.findViewById(R.id.weather_description_text_view);
+        weatherDescriptionTextView = view.findViewById(R.id.weather_description_text_view);
 
-        AutoCompleteTextView cityTextView = root.findViewById(R.id.autoCompleteCityTextView);
+        AutoCompleteTextView cityTextView = view.findViewById(R.id.autoCompleteCityTextView);
 
         // List of cities for auto-completion
         List<String> cityNames = Arrays.asList(
@@ -65,7 +65,7 @@ public class WeatherFragment extends Fragment {
         // Initialize OpenWeatherMapService
         openWeatherMapService = ApiClient.getInstance().create(OpenWeatherMapService.class);
 
-        Button buttonFetchWeather = root.findViewById(R.id.buttonFetchWeather);
+        Button buttonFetchWeather = view.findViewById(R.id.buttonFetchWeather);
         buttonFetchWeather.setOnClickListener(v -> {
             String city = cityTextView.getText().toString(); // Read the city from AutoCompleteTextView
             if (!city.isEmpty()) {
@@ -76,10 +76,12 @@ public class WeatherFragment extends Fragment {
         });
 
         // Date picker setup
-        Button buttonDatePicker = root.findViewById(R.id.buttonDatePicker);
+        Button buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
         buttonDatePicker.setOnClickListener(v -> showDatePickerDialog());
 
-        return root;
+        dbHelper = new DatabaseHelper(getContext());
+
+        return view;
     }
 
     private void showDatePickerDialog() {
@@ -128,7 +130,7 @@ public class WeatherFragment extends Fragment {
                         ForecastData.City city = forecastData.getCity();
 
                         // Convert selected datetime to Unix timestamp
-                        long selectedTimestamp = selectedDateTime.getTimeInMillis(); // Get the date in milliseconds
+                        long selectedTimestamp = selectedDateTime.getTimeInMillis() / 1000; // Get the date in seconds
 
                         ForecastData.Forecast closestForecast = null;
                         long minTimeDiff = Long.MAX_VALUE;
@@ -175,8 +177,8 @@ public class WeatherFragment extends Fragment {
             // Constructing weather information
             StringBuilder weatherInfo = new StringBuilder()
                     .append("City: ").append(city.getName()).append(", ").append(city.getCountry())
-                    .append("\n" + "Temperature: ").append(String.format(Locale.getDefault(), "%.0f°C", forecast.getMain().temp - 273.15))
-                    .append(" (Feels like: ").append(String.format(Locale.getDefault(), "%.0f°C", forecast.getMain().feels_like - 273.15)).append(")")
+                    .append("\n" + "Temperature: ").append(String.format(Locale.UK, "%.0f°C", forecast.getMain().temp - 273.15))
+                    .append(" (Feels like: ").append(String.format(Locale.UK, "%.0f°C", forecast.getMain().feels_like - 273.15)).append(")")
                     .append("\n" + "Weather: ").append(forecast.getWeather().get(0).description)
                     .append("\n" + "Clouds: ").append(forecast.getClouds().all).append("%")
                     .append("\n" + "Date: ").append(formattedDate)
@@ -188,8 +190,8 @@ public class WeatherFragment extends Fragment {
                     .append("\n" + "\n" + "Timezone: UTC").append(city.getTimezone() / 3600) // Converting seconds to hours
                     .append("\n" + "Sunrise: ").append(formattedSunrise)
                     .append("\n" + "Sunset: ").append(formattedSunset)
-                    .append("\n" + "Min Temp: ").append(String.format(Locale.getDefault(), "%.0f°C", forecast.getMain().temp_min - 273.15))
-                    .append("\n" + "Max Temp: ").append(String.format(Locale.getDefault(), "%.0f°C", forecast.getMain().temp_max - 273.15));
+                    .append("\n" + "Min Temp: ").append(String.format(Locale.UK, "%.0f°C", forecast.getMain().temp_min - 273.15))
+                    .append("\n" + "Max Temp: ").append(String.format(Locale.UK, "%.0f°C", forecast.getMain().temp_max - 273.15));
 
             // Avoid crashes when rain is null, sometimes it can be null
             if (forecast.getRain() != null) {
@@ -198,10 +200,60 @@ public class WeatherFragment extends Fragment {
 
             // Displaying the constructed weather information
             weatherDescriptionTextView.setText(weatherInfo.toString());
+
+            // Save the weather data to the database
+            logAndInsertWeatherData(forecast, city);
         }
     }
 
     private void showErrorToast() {
         Toast.makeText(getContext(), "Failed to load weather data", Toast.LENGTH_SHORT).show();
+    }
+
+    private void logAndInsertWeatherData(ForecastData.Forecast forecast, ForecastData.City city) {
+        // Log the data before inserting it
+        Log.d("WeatherData", "Inserting weather data into database:");
+        Log.d("WeatherData", "City: " + city.getName());
+        Log.d("WeatherData", "Country: " + city.getCountry());
+        Log.d("WeatherData", "DateTime: " + forecast.getDt());
+        Log.d("WeatherData", "Temperature: " + (forecast.getMain().temp - 273.15f));
+        Log.d("WeatherData", "Feels Like: " + (forecast.getMain().feels_like - 273.15f));
+        Log.d("WeatherData", "Description: " + forecast.getWeather().get(0).description);
+        Log.d("WeatherData", "Clouds: " + forecast.getClouds().all);
+        Log.d("WeatherData", "Humidity: " + forecast.getMain().humidity);
+        Log.d("WeatherData", "Wind Speed: " + forecast.getWind().speed);
+        Log.d("WeatherData", "Wind Degree: " + forecast.getWind().deg);
+        Log.d("WeatherData", "Wind Gust: " + forecast.getWind().gust);
+        Log.d("WeatherData", "Pressure: " + forecast.getMain().pressure);
+        Log.d("WeatherData", "Visibility: " + forecast.getVisibility());
+        Log.d("WeatherData", "Timezone: " + city.getTimezone());
+        Log.d("WeatherData", "Sunrise: " + city.getSunrise());
+        Log.d("WeatherData", "Sunset: " + city.getSunset());
+        Log.d("WeatherData", "Min Temperature: " + (forecast.getMain().temp_min - 273.15f));
+        Log.d("WeatherData", "Max Temperature: " + (forecast.getMain().temp_max - 273.15f));
+        Log.d("WeatherData", "Rain: " + (forecast.getRain() != null ? forecast.getRain().h3 : 0.0f));
+
+        // Insert the data into the database
+        dbHelper.insertPrevWeatherData(
+                city.getName(),
+                city.getCountry(),
+                forecast.getDt(),
+                forecast.getMain().temp - 273.15f,
+                forecast.getMain().feels_like - 273.15f,
+                forecast.getWeather().get(0).description,
+                forecast.getClouds().all,
+                forecast.getMain().humidity,
+                forecast.getWind().speed,
+                forecast.getWind().deg,
+                forecast.getWind().gust,
+                forecast.getMain().pressure,
+                forecast.getVisibility(),
+                city.getTimezone(),
+                city.getSunrise(),
+                city.getSunset(),
+                forecast.getMain().temp_min - 273.15f,
+                forecast.getMain().temp_max - 273.15f,
+                forecast.getRain() != null ? forecast.getRain().h3 : 0.0f
+        );
     }
 }

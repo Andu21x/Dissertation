@@ -36,7 +36,7 @@ public class TaskFragment extends Fragment {
     private long selectedDate;
     private ArrayAdapter<String> adapter;
     private final ArrayList<String> taskList = new ArrayList<>();
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.UK);
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

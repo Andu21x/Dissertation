@@ -28,4 +28,9 @@
         <item>Negative budgets</item>
         <item>Net profit or loss</item>
     </string-array>
+    <string-array name="weather_chart_types">
+        <item>Temperature</item>
+        <item>Humidity</item>
+        <item>Clouds</item>
+    </string-array>
 </resources>

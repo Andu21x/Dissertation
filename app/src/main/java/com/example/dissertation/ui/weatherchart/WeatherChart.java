@@ -1,4 +1,4 @@
-package com.example.dissertation.ui.chart;
+package com.example.dissertation.ui.weatherchart;
 
 import android.app.DatePickerDialog;
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
 import android.widget.Spinner;
 
@@ -14,16 +15,19 @@ import androidx.fragment.app.Fragment;
 
 import com.example.dissertation.DatabaseHelper;
 import com.example.dissertation.R;
-import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.charts.LineChart;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 
-public class ChartFragment extends Fragment {
+public class WeatherChart extends Fragment {
 
     private Spinner chartTypeSpinner;
-    private BarChart chart;
+    private LineChart chart;
+    private AutoCompleteTextView cityNameTextView;
     private EditText startDatePicker, endDatePicker;
     private DatabaseHelper dbHelper;
     private Calendar startCalendar = Calendar.getInstance();
@@ -31,17 +35,18 @@ public class ChartFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_chart, container, false);
+        View view = inflater.inflate(R.layout.fragment_weatherchart, container, false);
 
-        chartTypeSpinner = view.findViewById(R.id.chartTypeSpinner);
-        chart = view.findViewById(R.id.chart);
+        chartTypeSpinner = view.findViewById(R.id.weatherChartTypeSpinner);
+        chart = view.findViewById(R.id.weatherChart);
+        cityNameTextView = view.findViewById(R.id.cityNameTextView);
         startDatePicker = view.findViewById(R.id.startDatePicker);
         endDatePicker = view.findViewById(R.id.endDatePicker);
 
         dbHelper = new DatabaseHelper(getActivity());
 
         // Setup spinner
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(), R.array.chart_types, android.R.layout.simple_spinner_item);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getContext(), R.array.weather_chart_types, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         chartTypeSpinner.setAdapter(adapter);
 
@@ -51,8 +56,8 @@ public class ChartFragment extends Fragment {
         chartTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                // Convert integer position to ChartType enum
-                ChartType chartType = ChartType.values()[position];
+                // Convert integer position to WeatherChartType enum to find the right chart to display
+                WeatherChartType chartType = WeatherChartType.values()[position];
                 updateChart(chartType);
             }
 
@@ -62,6 +67,21 @@ public class ChartFragment extends Fragment {
                 // Do nothing
             }
         });
+
+        // Set up city name AutoCompleteTextView
+        List<String> cityNames = Arrays.asList(
+                "Tokyo", "Delhi", "Shanghai", "Sao Paulo", "Mexico City", "Cairo",
+                "Mumbai", "Beijing", "Dhaka", "Osaka", "New York", "Karachi",
+                "Buenos Aires", "Chongqing", "Istanbul", "Kolkata", "Manila",
+                "Lagos", "Rio de Janeiro", "Tianjin", "Kinshasa", "Rome",
+                "Lisbon", "Athens", "Berlin", "Honolulu", "Vienna", "Bangkok",
+                "Madrid", "Paris", "Prague", "Valletta", "Abu Dhabi", "Dublin",
+                "London", "Budapest", "Bucharest", "Toronto", "San Juan",
+                "Bogota", "Cape Town", "Austin", "Moscow");
+
+        ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, cityNames);
+        cityNameTextView.setAdapter(cityAdapter);
+        cityNameTextView.setThreshold(1);
 
         return view;
     }
@@ -84,30 +104,27 @@ public class ChartFragment extends Fragment {
         editText.setText(sdf.format(calendar.getTime()));
     }
 
+    private void updateChart(WeatherChartType chartType) {
+        long startDate = startCalendar.getTimeInMillis() / 1000; // Convert to Unix timestamp
+        long endDate = endCalendar.getTimeInMillis() / 1000; // Convert to Unix timestamp
+        String cityName = cityNameTextView.getText().toString(); // Get the city name
 
-    private void updateChart(ChartType chartType) {
-        long startDate = startCalendar.getTimeInMillis();
-        long endDate = endCalendar.getTimeInMillis();
-
-        ChartLoader loader = null;
+        WeatherChartLoader loader = null;
 
         switch (chartType) {
-            case TOTAL_REVENUES:
-                loader = new TotalRevenuesLoader();
+            case TEMPERATURE:
+                loader = new TemperatureLoader();
                 break;
-            case POSITIVE_BUDGETS:
-                loader = new PositiveBudgetsLoader();
+            case HUMIDITY:
+                loader = new HumidityLoader();
                 break;
-            case NEGATIVE_BUDGETS:
-                loader = new NegativeBudgetsLoader();
-                break;
-            case NET_PROFIT_OR_LOSS:
-                loader = new NetProfitOrLossLoader();
+            case CLOUDS:
+                loader = new CloudsLoader();
                 break;
         }
 
         if (loader != null) {
-            loader.loadChartData(chart, startDate, endDate, dbHelper);
+            loader.loadChartData(chart, startDate, endDate, cityName, dbHelper);
         }
     }
 }

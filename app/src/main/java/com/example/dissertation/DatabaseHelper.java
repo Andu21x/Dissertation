@@ -9,19 +9,24 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "myDatabase.db";
-    private static final int DATABASE_VERSION = 16;
+    private static final int DATABASE_VERSION = 17;
 
     // Creating the tables
-    private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable (noteID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, creationDate INTEGER, editDate INTEGER, deletedDate INTEGER)";
+    private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable " +
+            "(noteID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, creationDate INTEGER, editDate INTEGER, deletedDate INTEGER)";
 
-    private static final String CREATE_BUDGET_TABLE = "CREATE TABLE budgetTable (budgetID INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, description TEXT, quantity INTEGER, sellingPrice REAL, total REAL, budgetDate INTEGER)";
+    private static final String CREATE_BUDGET_TABLE = "CREATE TABLE budgetTable " +
+            "(budgetID INTEGER PRIMARY KEY AUTOINCREMENT, type TEXT, description TEXT, quantity INTEGER, sellingPrice REAL, total REAL, budgetDate INTEGER)";
 
-    private static final String CREATE_TASK_TABLE = "CREATE TABLE taskTable (taskID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT, type TEXT, taskDate INTEGER, startTime INTEGER, endTime INTEGER, priority INTEGER, isCompleted INTEGER DEFAULT 0)";
+    private static final String CREATE_TASK_TABLE = "CREATE TABLE taskTable " +
+            "(taskID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT, type TEXT, taskDate INTEGER, startTime INTEGER, endTime INTEGER, priority INTEGER, isCompleted INTEGER DEFAULT 0)";
 
-    private static final String CREATE_INVENTORY_TABLE = "CREATE TABLE inventoryTable (itemID INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, itemQuantity INTEGER, itemType TEXT, itemSubType TEXT, itemDescription TEXT)";
+    private static final String CREATE_INVENTORY_TABLE = "CREATE TABLE inventoryTable " +
+            "(itemID INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, itemQuantity INTEGER, itemType TEXT, itemSubType TEXT, itemDescription TEXT)";
 
-    public static final String BUDGET_QUERY = "SELECT budgetDate, total FROM budgetTable";
-
+    private static final String CREATE_PREV_WEATHER_DATA_TABLE = "CREATE TABLE prevWeatherDataTable " +
+            "(prevWeatherID INTEGER PRIMARY KEY AUTOINCREMENT, cityName TEXT, country TEXT, dateTime INTEGER, temperature REAL, feels_like REAL, weather_description TEXT, clouds INTEGER, humidity INTEGER, " +
+            "wind_speed REAL, wind_deg INTEGER, wind_gust REAL, pressure INTEGER, visibility INTEGER, timezone INTEGER, sunrise INTEGER, sunset INTEGER, min_temp REAL, max_temp REAL, rain_mm REAL)";
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -33,15 +38,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_BUDGET_TABLE);
         db.execSQL(CREATE_TASK_TABLE);
         db.execSQL(CREATE_INVENTORY_TABLE);
+        db.execSQL(CREATE_PREV_WEATHER_DATA_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 16) {
+        if (oldVersion < 17) {
             db.execSQL("DROP TABLE IF EXISTS noteTable");
             db.execSQL("DROP TABLE IF EXISTS budgetTable");
             db.execSQL("DROP TABLE IF EXISTS taskTable");
             db.execSQL("DROP TABLE IF EXISTS inventoryTable");
+            db.execSQL("DROP TABLE IF EXISTS prevWeatherDataTable");
             onCreate(db);
         }
     }
@@ -102,6 +109,34 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("itemSubType", itemSubType);
         values.put("itemDescription", itemDescription);
         db.insert("inventoryTable", null, values);
+    }
+
+    public void insertPrevWeatherData(String cityName, String country, long dateTime, double temperature, double feelsLike,
+                                      String description, int clouds, int humidity, double windSpeed, int windDeg,
+                                      double windGust, int pressure, int visibility, int timezone, long sunrise,
+                                      long sunset, double minTemp, double maxTemp, double rainMm) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("cityName", cityName);
+        values.put("country", country);
+        values.put("dateTime", dateTime);
+        values.put("temperature", temperature);
+        values.put("feels_like", feelsLike);
+        values.put("weather_description", description);
+        values.put("clouds", clouds);
+        values.put("humidity", humidity);
+        values.put("wind_speed", windSpeed);
+        values.put("wind_deg", windDeg);
+        values.put("wind_gust", windGust);
+        values.put("pressure", pressure);
+        values.put("visibility", visibility);
+        values.put("timezone", timezone);
+        values.put("sunrise", sunrise);
+        values.put("sunset", sunset);
+        values.put("min_temp", minTemp);
+        values.put("max_temp", maxTemp);
+        values.put("rain_mm", rainMm);
+        db.insert("prevWeatherDataTable", null, values);
     }
 
 
@@ -194,6 +229,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         return db.rawQuery(query, selectionArgs);
+    }
+
+    public Cursor readPrevWeatherData(long startDate, long endDate) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT * FROM prevWeatherDataTable WHERE dateTime BETWEEN ? AND ?";
+        return db.rawQuery(query, new String[]{String.valueOf(startDate), String.valueOf(endDate)});
     }
 
 

@@ -68,4 +68,10 @@
         android:name="com.example.dissertation.ui.inventory.InventoryFragment"
         android:label="Inventory"
         tools:layout="@layout/fragment_inventory"/>
+
+    <fragment
+        android:id="@+id/nav_weather_chart"
+        android:name="com.example.dissertation.ui.weatherchart.WeatherChart"
+        android:label="Weather Chart"
+        tools:layout="@layout/fragment_weatherchart" />
 </navigation>

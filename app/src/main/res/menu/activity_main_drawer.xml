@@ -44,5 +44,10 @@
             android:id="@+id/nav_inventory"
             android:title="@string/inventory"
             android:icon="@drawable/inventory" />
+
+        <item
+            android:id="@+id/nav_weather_chart"
+            android:title="Weather chart"
+            android:icon="@drawable/weatherchart" />
     </group>
 </menu>
