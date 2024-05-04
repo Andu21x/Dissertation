@@ -156,6 +156,7 @@ public class InventoryFragment extends Fragment {
                 subTypeAdapter.notifyDataSetChanged();
             }
 
+            // Method recommended by the IDE to handle no selection
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 // Do nothing
@@ -260,6 +261,7 @@ public class InventoryFragment extends Fragment {
                 subTypeAdapter.notifyDataSetChanged();
             }
 
+            // Method recommended by the IDE to handle no selection
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 // Do nothing
@@ -335,7 +337,6 @@ public class InventoryFragment extends Fragment {
                 subTypeAdapter.notifyDataSetChanged();
             }
 
-            // Method recommended by the IDE to handle no selection
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 // Do nothing

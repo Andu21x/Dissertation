@@ -113,7 +113,7 @@ public class BudgetFragment extends Fragment {
                 // Change the datatype by parsing the string argument into an int/double
                 int quantity = Integer.parseInt(quantityStr);
                 double sellingPrice = Double.parseDouble(sellingPriceStr);
-                long dateMillis = calendar.getTimeInMillis() / 1000; // Convert to seconds
+                long dateMillis = calendar.getTimeInMillis(); // Get the date in milliseconds
 
                 // When it's an expense, transform it into a negative number
                 if ("Expense".equals(type)) {

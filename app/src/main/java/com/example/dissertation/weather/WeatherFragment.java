@@ -128,7 +128,7 @@ public class WeatherFragment extends Fragment {
                         ForecastData.City city = forecastData.getCity();
 
                         // Convert selected datetime to Unix timestamp
-                        long selectedTimestamp = selectedDateTime.getTimeInMillis() / 1000; // Convert to seconds
+                        long selectedTimestamp = selectedDateTime.getTimeInMillis(); // Get the date in milliseconds
 
                         ForecastData.Forecast closestForecast = null;
                         long minTimeDiff = Long.MAX_VALUE;

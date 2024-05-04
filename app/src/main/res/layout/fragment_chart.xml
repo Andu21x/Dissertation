@@ -1,21 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <com.github.mikephil.charting.charts.BarChart
-        android:id="@+id/chart"
+    <EditText
+        android:id="@+id/startDatePicker"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_above="@id/chartTypeSpinner"
-        android:layout_alignParentTop="true" />
+        android:layout_height="48dp"
+        android:hint="Start Date"
+        android:focusable="false"/>
+
+    <EditText
+        android:id="@+id/endDatePicker"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="End Date"
+        android:focusable="false"/>
 
     <Spinner
         android:id="@+id/chartTypeSpinner"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_alignParentBottom="true"
-        android:padding="8dp"
-        android:gravity="center_vertical" />
+        android:layout_height="wrap_content"/>
 
-</RelativeLayout>
+    <com.github.mikephil.charting.charts.BarChart
+        android:id="@+id/chart"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</LinearLayout>

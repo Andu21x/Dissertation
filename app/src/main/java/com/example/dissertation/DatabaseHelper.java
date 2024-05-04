@@ -20,6 +20,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String CREATE_INVENTORY_TABLE = "CREATE TABLE inventoryTable (itemID INTEGER PRIMARY KEY AUTOINCREMENT, itemName TEXT, itemQuantity INTEGER, itemType TEXT, itemSubType TEXT, itemDescription TEXT)";
 
+    public static final String BUDGET_QUERY = "SELECT budgetDate, total FROM budgetTable";
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -161,10 +163,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.rawQuery(query, new String[]{String.valueOf(dayStart), String.valueOf(dayEnd)});
     }
 
-    public Cursor readChart(String tableName, String column) {
+    public Cursor readChart(String sqlQuery) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT " + column + " FROM " + tableName;
-        return db.rawQuery(query, null);
+        return db.rawQuery(sqlQuery, null);
     }
 
     public Cursor readItem() {
