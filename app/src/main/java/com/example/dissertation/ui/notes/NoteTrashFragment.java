@@ -29,6 +29,7 @@ public class NoteTrashFragment extends Fragment {
     private ArrayAdapter<String> adapter;
     private DatabaseHelper dbHelper;
     private ArrayList<Integer> noteIds;
+    ArrayList<String> notes = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -38,7 +39,8 @@ public class NoteTrashFragment extends Fragment {
         noteIds = new ArrayList<>();
 
         dbHelper = new DatabaseHelper(getActivity());
-
+        adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
+        listViewTrash.setAdapter(adapter);
 
         loadTrashNotes(); // Load data early to ensure UI is populated before any user interaction
 
@@ -62,12 +64,12 @@ public class NoteTrashFragment extends Fragment {
         return view;
     }
 
+
     @SuppressLint("Range")
     private void loadTrashNotes() {
-        try {
-            Cursor cursor = dbHelper.readDeletedNotes();
-            ArrayList<String> notes = new ArrayList<>();
+        try (Cursor cursor = dbHelper.readDeletedNotes()){
             noteIds.clear();
+            notes.clear();
             while (cursor.moveToNext()) {
                 int id = cursor.getInt(cursor.getColumnIndex("noteID"));
                 String title = cursor.getString(cursor.getColumnIndex("title"));
@@ -80,8 +82,9 @@ public class NoteTrashFragment extends Fragment {
                 notes.add(title + "\n" + content + "\n" + "Deleted: " + deletedDateString);
                 noteIds.add(id);
             }
-            adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
-            listViewTrash.setAdapter(adapter);
+            adapter.clear();
+            adapter.addAll(notes);
+            adapter.notifyDataSetChanged();
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Error loading deleted notes: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -91,6 +94,7 @@ public class NoteTrashFragment extends Fragment {
         try {
             dbHelper.deleteNotePermanently(noteId);
             Toast.makeText(getActivity(), "Note permanently deleted", Toast.LENGTH_SHORT).show();
+
             loadTrashNotes(); // Reload the trash notes to reflect the deletion
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Error deleting note permanently: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -111,6 +115,7 @@ public class NoteTrashFragment extends Fragment {
         try {
             dbHelper.restoreNote(noteId);
             Toast.makeText(getActivity(), "Note Restored", Toast.LENGTH_SHORT).show();
+
             loadTrashNotes(); // Reload the trash notes to reflect the restoration
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Error restoring note: " + e.getMessage(), Toast.LENGTH_LONG).show();

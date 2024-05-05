@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -149,17 +150,23 @@ public class NotesFragment extends Fragment {
     private void showUpdateDialog(final int noteId, String currentTitle, String currentContent) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
 
-        Cursor cursor = dbHelper.readNote();
-        cursor.moveToFirst();
+        // Initialization of variables for date strings
+        String creationDateString = "";
+        String editDateString = "";
 
-        long creationDate = cursor.getLong(cursor.getColumnIndex("creationDate"));
-        long editDate = cursor.getLong(cursor.getColumnIndex("editDate"));
+        // Use try-with-resources to ensure the Cursor is closed automatically
+        try (Cursor cursor = dbHelper.readNote()) {
+            if (cursor.moveToFirst()) {
+                long creationDate = cursor.getLong(cursor.getColumnIndex("creationDate"));
+                long editDate = cursor.getLong(cursor.getColumnIndex("editDate"));
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK);
-        String creationDateString = sdf.format(new Date(creationDate * 1000)); // Convert to milliseconds
-        String editDateString = sdf.format(new Date(editDate * 1000)); // Convert to milliseconds
-
-        cursor.close();
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK);
+                creationDateString = sdf.format(new Date(creationDate * 1000)); // Convert to milliseconds
+                editDateString = sdf.format(new Date(editDate * 1000)); // Convert to milliseconds
+            }
+        } catch (Exception e) {
+            Log.e("DialogSetup", "Failed to load data", e);
+        }
 
         // Set up the input fields
         editTextTitle = new EditText(getContext());
@@ -179,7 +186,6 @@ public class NotesFragment extends Fragment {
 
         // Layout to contain the EditText fields
         LinearLayout layout = new LinearLayout(getContext());
-
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 10, 40, 10); // Set padding around the layout
 
@@ -205,6 +211,7 @@ public class NotesFragment extends Fragment {
 
         builder.show();
     }
+
 
     private void updateNote(int noteId, String title, String content) {
         try {

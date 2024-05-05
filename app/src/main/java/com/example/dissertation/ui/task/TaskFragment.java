@@ -38,6 +38,7 @@ public class TaskFragment extends Fragment {
     private final ArrayList<String> taskList = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.UK);
 
+    @SuppressLint("Range")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
@@ -54,7 +55,7 @@ public class TaskFragment extends Fragment {
 
         loadTasks(selectedDate); // Load tasks for the selected date
 
-        addButton.setOnClickListener(v -> showUpdateDialog(null));
+        addButton.setOnClickListener(v -> showAddTaskDialog());
 
         calendarView.setOnDateChangeListener((view12, year, month, dayOfMonth) -> {
             selectedDate = convertToTimestamp(year, month, dayOfMonth);
@@ -62,9 +63,21 @@ public class TaskFragment extends Fragment {
         });
 
         listViewTasks.setOnItemClickListener((parent, view1, position, id) -> {
-            Cursor cursor = dbHelper.readTask(selectedDate, selectedDate + DAY_IN_MILLIS - 1);
-            if (cursor != null && cursor.moveToPosition(position)) {
-                showUpdateDialog(cursor);
+            try (Cursor cursor = dbHelper.readTask(selectedDate, selectedDate + DAY_IN_MILLIS - 1)) {
+                if (cursor != null && cursor.moveToPosition(position)) {
+                    int taskID = cursor.getInt(cursor.getColumnIndex("taskID"));
+                    String title = cursor.getString(cursor.getColumnIndex("title"));
+                    String description = cursor.getString(cursor.getColumnIndex("description"));
+                    String type = cursor.getString(cursor.getColumnIndex("type"));
+                    long startTime = cursor.getLong(cursor.getColumnIndex("startTime"));
+                    long endTime = cursor.getLong(cursor.getColumnIndex("endTime"));
+                    int priority = cursor.getInt(cursor.getColumnIndex("priority"));
+                    int isCompleted = cursor.getInt(cursor.getColumnIndex("isCompleted"));
+
+                    showEditTaskDialog(taskID, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+                }
+            } catch (Exception e) {
+                Toast.makeText(getActivity(), "Error loading task: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
 
@@ -72,30 +85,19 @@ public class TaskFragment extends Fragment {
     }
 
     @SuppressLint("Range")
-    private void saveTask(Cursor cursor, EditText inputTitle, EditText inputDescription, Spinner typeSpinner, long selectedDate, EditText inputStartTime, EditText inputEndTime, EditText inputPriority, EditText inputCompleted) {
-        int taskID = cursor != null ? cursor.getInt(cursor.getColumnIndex("taskID")) : -1;
-
-        String title = inputTitle.getText().toString();
-        String description = inputDescription.getText().toString();
-        String type = typeSpinner.getSelectedItem().toString();
-        long startTime = parseTime(inputStartTime.getText().toString());
-        long endTime = parseTime(inputEndTime.getText().toString());
-
+    private void saveTask(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
         try {
-            // Change the datatype by parsing the string argument into an int/double
-            int priority = Integer.parseInt(inputPriority.getText().toString());
-            int isCompleted = Integer.parseInt(inputCompleted.getText().toString());
-
             if (title.isEmpty() || description.isEmpty() || type.isEmpty()) {
                 Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             if (taskID == -1) {
-                // Insert the values into the database table and show a toast pop-up alerting the user
+                // Insert new task
                 dbHelper.insertTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
                 Toast.makeText(getContext(), "Task added", Toast.LENGTH_SHORT).show();
             } else {
+                // Update existing task
                 updateTask(taskID, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
             }
 
@@ -107,6 +109,7 @@ public class TaskFragment extends Fragment {
             Toast.makeText(getContext(), "Failed to save task: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
+
 
     @SuppressLint("Range")
     private void loadTasks(long date) {
@@ -157,94 +160,163 @@ public class TaskFragment extends Fragment {
                 .show();
     }
 
-    @SuppressLint("Range")
-    private void showUpdateDialog(Cursor cursor) {
+    private void showEditTaskDialog(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        builder.setTitle(cursor == null ? "Add New Task" : "Edit Task");
+        builder.setTitle("Edit Task");
 
-        // Set up the input fields
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 10, 40, 10);
+
+        // Setup title EditText
         EditText inputTitle = new EditText(getContext());
         inputTitle.setInputType(InputType.TYPE_CLASS_TEXT);
-        inputTitle.setHint("Title");
-        if (cursor != null) {
-            inputTitle.setText(cursor.getString(cursor.getColumnIndex("title")));
-        }
+        inputTitle.setText(title);
+        layout.addView(inputTitle);
 
+        // Setup description EditText
         EditText inputDescription = new EditText(getContext());
-        inputDescription.setInputType(InputType.TYPE_CLASS_TEXT);
-        inputDescription.setHint("Description");
-        if (cursor != null) {
-            inputDescription.setText(cursor.getString(cursor.getColumnIndex("description")));
-        }
+        inputDescription.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        inputDescription.setText(description);
+        layout.addView(inputDescription);
 
-        EditText inputTaskDate = new EditText(getContext());
-        inputTaskDate.setInputType(InputType.TYPE_NULL);
-        inputTaskDate.setFocusable(false);
-        inputTaskDate.setHint("Task Date");
-        inputTaskDate.setText(getDateString(selectedDate));
+        // Setup type Spinner
+        Spinner typeSpinner = new Spinner(getContext());
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, new String[]{"Task", "Event", "Other"});
+        typeSpinner.setAdapter(typeAdapter);
+        typeSpinner.setSelection(typeAdapter.getPosition(type));
+        layout.addView(typeSpinner);
 
+        // Setup startTime EditText
         EditText inputStartTime = new EditText(getContext());
         inputStartTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
-        inputStartTime.setHint("Start Time (HH:mm)");
+        inputStartTime.setText(timeFormat.format(new Date(startTime)));
+        layout.addView(inputStartTime);
 
+        // Setup endTime EditText
         EditText inputEndTime = new EditText(getContext());
         inputEndTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
-        inputEndTime.setHint("End Time (HH:mm)");
+        inputEndTime.setText(timeFormat.format(new Date(endTime)));
+        layout.addView(inputEndTime);
 
+        // Setup priority EditText
         EditText inputPriority = new EditText(getContext());
         inputPriority.setInputType(InputType.TYPE_CLASS_NUMBER);
-        inputPriority.setHint("Priority (1 to 3)");
+        inputPriority.setText(String.valueOf(priority));
+        layout.addView(inputPriority);
 
+        // Setup completed EditText
         EditText inputCompleted = new EditText(getContext());
         inputCompleted.setInputType(InputType.TYPE_CLASS_NUMBER);
-        inputCompleted.setHint("Completed? (0 or 1)");
-
-        // Set up spinner to show up a menu when user clicks on type
-        Spinner typeSpinner = new Spinner(getContext());
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, new String[]{"Task", "Event", "Other"});
-        typeSpinner.setAdapter(typeAdapter);
-        if (cursor != null) {
-            int position = typeAdapter.getPosition(cursor.getString(cursor.getColumnIndex("type")));
-            typeSpinner.setSelection(position);
-        }
-
-        // Layout to contain the EditText fields
-        LinearLayout layout = new LinearLayout(getContext());
-
-        layout.setOrientation(LinearLayout.VERTICAL);
-
-        layout.addView(inputTitle);
-        layout.addView(inputDescription);
-        layout.addView(typeSpinner);
-        layout.addView(inputTaskDate);
-        layout.addView(inputStartTime);
-        layout.addView(inputEndTime);
-        layout.addView(inputPriority);
+        inputCompleted.setText(String.valueOf(isCompleted));
         layout.addView(inputCompleted);
 
-        builder.setView(layout); // Set the view to AlertDialog
+        builder.setView(layout);
 
-        // Set up the buttons
-        builder.setPositiveButton(cursor == null ? "Add" : "Update", (dialog, which) -> saveTask(cursor, inputTitle, inputDescription, typeSpinner, selectedDate, inputStartTime, inputEndTime, inputPriority, inputCompleted));
+        // Setup dialog buttons
+        builder.setPositiveButton("Update", (dialog, which) -> {
+            saveTask(taskID, inputTitle.getText().toString(), inputDescription.getText().toString(),
+                    typeSpinner.getSelectedItem().toString(), selectedDate,
+                    parseTime(inputStartTime.getText().toString()), parseTime(inputEndTime.getText().toString()),
+                    Integer.parseInt(inputPriority.getText().toString()), Integer.parseInt(inputCompleted.getText().toString()));
+        });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
-        if (cursor != null) {
-            builder.setNeutralButton("Delete", (dialog, which) -> confirmDeletion(cursor.getInt(cursor.getColumnIndex("taskID"))));
-        }
+        builder.setNeutralButton("Delete", (dialog, which) -> confirmDeletion(taskID));
 
         builder.show();
     }
 
-    private void updateTask(int taskID, String title, String description, String type, long taskDate, long startTime, long endTime, int priority, int isCompleted) {
-        try {
-            dbHelper.updateTask(taskID, title, description, type, taskDate, startTime, endTime, priority, isCompleted);
-            Toast.makeText(getContext(), "Task updated", Toast.LENGTH_SHORT).show();
+    private void showAddTaskDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        builder.setTitle("Add New Task");
 
-            loadTasks(selectedDate); // Reload the list of tasks at the selectedDate
-        } catch (Exception e) {
-            Toast.makeText(getContext(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        // Create layout to hold input fields
+        LinearLayout layout = new LinearLayout(getContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 10, 40, 10);
+
+        // Input field for the title of the task
+        EditText inputTitle = new EditText(getContext());
+        inputTitle.setInputType(InputType.TYPE_CLASS_TEXT);
+        inputTitle.setHint("Title");
+        layout.addView(inputTitle);
+
+        // Input field for the description of the task
+        EditText inputDescription = new EditText(getContext());
+        inputDescription.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+        inputDescription.setHint("Description");
+        layout.addView(inputDescription);
+
+        // Spinner for selecting the type of task
+        Spinner typeSpinner = new Spinner(getContext());
+        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_spinner_dropdown_item, new String[]{"Task", "Event", "Other"});
+        typeSpinner.setAdapter(typeAdapter);
+        layout.addView(typeSpinner);
+
+        // Input field for the start time
+        EditText inputStartTime = new EditText(getContext());
+        inputStartTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
+        inputStartTime.setHint("Start Time (HH:mm)");
+        layout.addView(inputStartTime);
+
+        // Input field for the end time
+        EditText inputEndTime = new EditText(getContext());
+        inputEndTime.setInputType(InputType.TYPE_CLASS_DATETIME | InputType.TYPE_DATETIME_VARIATION_TIME);
+        inputEndTime.setHint("End Time (HH:mm)");
+        layout.addView(inputEndTime);
+
+        // Input field for priority
+        EditText inputPriority = new EditText(getContext());
+        inputPriority.setInputType(InputType.TYPE_CLASS_NUMBER);
+        inputPriority.setHint("Priority (1-10)");
+        layout.addView(inputPriority);
+
+        // Input field for completion status
+        EditText inputCompleted = new EditText(getContext());
+        inputCompleted.setInputType(InputType.TYPE_CLASS_NUMBER);
+        inputCompleted.setHint("Completed? (0 or 1)");
+        layout.addView(inputCompleted);
+
+        builder.setView(layout);
+
+        // Setup buttons for dialog
+        builder.setPositiveButton("Add", (dialog, which) -> {
+            String title = inputTitle.getText().toString();
+            String description = inputDescription.getText().toString();
+            String type = typeSpinner.getSelectedItem().toString();
+            long startTime = parseTime(inputStartTime.getText().toString());
+            long endTime = parseTime(inputEndTime.getText().toString());
+            int priority = Integer.parseInt(inputPriority.getText().toString());
+            int isCompleted = Integer.parseInt(inputCompleted.getText().toString());
+
+            addTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private void addTask(String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
+        if (title.isEmpty() || description.isEmpty() || type.isEmpty()) {
+            Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
+            return;
         }
+        dbHelper.insertTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+        Toast.makeText(getContext(), "Task added", Toast.LENGTH_SHORT).show();
+        loadTasks(selectedDate);
+    }
+
+    private void updateTask(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
+        if (title.isEmpty() || description.isEmpty() || type.isEmpty()) {
+            Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        dbHelper.updateTask(taskID, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+        Toast.makeText(getContext(), "Task updated", Toast.LENGTH_SHORT).show();
+        loadTasks(selectedDate);
     }
 
     private long parseTime(String time) {
@@ -255,11 +327,6 @@ public class TaskFragment extends Fragment {
             Toast.makeText(getContext(), "Invalid time format", Toast.LENGTH_SHORT).show();
             return 0;
         }
-    }
-
-    private String getDateString(long timestamp) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy", Locale.UK);
-        return dateFormat.format(new Date(timestamp));
     }
 
     private long convertToTimestamp(int year, int month, int day) {
