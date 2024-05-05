@@ -291,22 +291,12 @@ public class TaskFragment extends Fragment {
             int priority = Integer.parseInt(inputPriority.getText().toString());
             int isCompleted = Integer.parseInt(inputCompleted.getText().toString());
 
-            addTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+            saveTask(-1, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
         builder.show();
-    }
-
-    private void addTask(String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
-        if (title.isEmpty() || description.isEmpty() || type.isEmpty()) {
-            Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        dbHelper.insertTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
-        Toast.makeText(getContext(), "Task added", Toast.LENGTH_SHORT).show();
-        loadTasks(selectedDate);
     }
 
     private void updateTask(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
