@@ -7,12 +7,14 @@ import android.app.AlertDialog;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CalendarView;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -23,6 +25,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.dissertation.DatabaseHelper;
 import com.example.dissertation.R;
+import com.example.dissertation.notifications.NotificationHelper;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -30,13 +33,16 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class TaskFragment extends Fragment {
+    private static final String TAG = "TaskFragment";
     private DatabaseHelper dbHelper;
     private long selectedDate;
     private ArrayAdapter<String> adapter;
     private final ArrayList<String> taskList = new ArrayList<>();
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm", Locale.UK);
+    private NotificationHelper notificationHelper;
 
     @SuppressLint("Range")
     @Override
@@ -50,6 +56,7 @@ public class TaskFragment extends Fragment {
         dbHelper = new DatabaseHelper(getActivity());
         adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, taskList);
         listViewTasks.setAdapter(adapter);
+        notificationHelper = new NotificationHelper(getActivity());
 
         selectedDate = calendarView.getDate(); // Set selectedDate to the date the user selected on the calendar view
 
@@ -85,23 +92,13 @@ public class TaskFragment extends Fragment {
     }
 
     @SuppressLint("Range")
-    private void saveTask(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
+    private void saveTask(String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
         try {
             if (title.isEmpty() || description.isEmpty() || type.isEmpty()) {
                 Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            if (taskID == -1) {
-                // Insert new task
-                dbHelper.insertTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
-                Toast.makeText(getContext(), "Task added", Toast.LENGTH_SHORT).show();
-            } else {
-                // Update existing task
-                updateTask(taskID, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
-            }
-
-            loadTasks(selectedDate); // Reload the list of tasks at the selectedDate
+            addTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
 
         } catch (NumberFormatException e) {
             Toast.makeText(getContext(), "Invalid format. Please check your inputs.", Toast.LENGTH_SHORT).show();
@@ -113,8 +110,10 @@ public class TaskFragment extends Fragment {
 
     @SuppressLint("Range")
     private void loadTasks(long date) {
-        Calendar calendar = Calendar.getInstance();
+        // Local calendar instance to avoid side effects
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"), Locale.UK);
         calendar.setTimeInMillis(date);
+
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
@@ -128,7 +127,6 @@ public class TaskFragment extends Fragment {
         long dayEnd = calendar.getTimeInMillis();
 
         taskList.clear();
-
         try (Cursor cursor = dbHelper.readTask(dayStart, dayEnd)) {
             while (cursor.moveToNext()) {
                 String title = cursor.getString(cursor.getColumnIndex("title"));
@@ -160,6 +158,7 @@ public class TaskFragment extends Fragment {
                 .show();
     }
 
+    @SuppressLint("SetTextI18n")
     private void showEditTaskDialog(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Edit Task");
@@ -215,7 +214,7 @@ public class TaskFragment extends Fragment {
 
         // Setup dialog buttons
         builder.setPositiveButton("Update", (dialog, which) -> {
-            saveTask(taskID, inputTitle.getText().toString(), inputDescription.getText().toString(),
+            updateTask(taskID, inputTitle.getText().toString(), inputDescription.getText().toString(),
                     typeSpinner.getSelectedItem().toString(), selectedDate,
                     parseTime(inputStartTime.getText().toString()), parseTime(inputEndTime.getText().toString()),
                     Integer.parseInt(inputPriority.getText().toString()), Integer.parseInt(inputCompleted.getText().toString()));
@@ -228,6 +227,7 @@ public class TaskFragment extends Fragment {
         builder.show();
     }
 
+    @SuppressLint("SetTextI18n")
     private void showAddTaskDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Add New Task");
@@ -279,6 +279,10 @@ public class TaskFragment extends Fragment {
         inputCompleted.setHint("Completed? (0 or 1)");
         layout.addView(inputCompleted);
 
+        CheckBox alarmCheckbox = new CheckBox(getContext());
+        alarmCheckbox.setText("Set reminder");
+        layout.addView(alarmCheckbox);
+
         builder.setView(layout);
 
         // Setup buttons for dialog
@@ -291,12 +295,24 @@ public class TaskFragment extends Fragment {
             int priority = Integer.parseInt(inputPriority.getText().toString());
             int isCompleted = Integer.parseInt(inputCompleted.getText().toString());
 
-            saveTask(-1, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+            saveTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+
+            if (alarmCheckbox.isChecked()) {
+                long notificationTime = convertToTimestampWithTime(selectedDate, inputStartTime.getText().toString());
+                Log.d(TAG, "Scheduling notification at: " + new Date(notificationTime).toString() + " with title: " + title);
+                notificationHelper.scheduleNotification(notificationTime, title, "Reminder: " + title);
+            }
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
         builder.show();
+    }
+
+    private void addTask(String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
+        dbHelper.insertTask(title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+        Toast.makeText(getContext(), "Task added", Toast.LENGTH_SHORT).show();
+        loadTasks(selectedDate);
     }
 
     private void updateTask(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
@@ -322,6 +338,27 @@ public class TaskFragment extends Fragment {
     private long convertToTimestamp(int year, int month, int day) {
         Calendar calendar = Calendar.getInstance();
         calendar.set(year, month, day, 0, 0, 0);
+        return calendar.getTimeInMillis();
+    }
+
+    private long convertToTimestampWithTime(long date, String time) {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"), Locale.UK);
+        calendar.setTimeInMillis(date);
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm", Locale.UK);
+        sdf.setTimeZone(TimeZone.getTimeZone("Europe/London"));
+
+        try {
+            Date timeDate = sdf.parse(time);
+            Calendar timeCalendar = Calendar.getInstance();
+            timeCalendar.setTime(timeDate);
+
+            calendar.set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY));
+            calendar.set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE));
+            Log.d(TAG, "Converted time: " + calendar.getTime());
+        } catch (ParseException e) {
+            Log.e(TAG, "Error parsing time: " + time, e);
+        }
+
         return calendar.getTimeInMillis();
     }
 }
