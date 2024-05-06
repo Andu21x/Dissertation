@@ -213,12 +213,10 @@ public class TaskFragment extends Fragment {
         builder.setView(layout);
 
         // Setup dialog buttons
-        builder.setPositiveButton("Update", (dialog, which) -> {
-            updateTask(taskID, inputTitle.getText().toString(), inputDescription.getText().toString(),
-                    typeSpinner.getSelectedItem().toString(), selectedDate,
-                    parseTime(inputStartTime.getText().toString()), parseTime(inputEndTime.getText().toString()),
-                    Integer.parseInt(inputPriority.getText().toString()), Integer.parseInt(inputCompleted.getText().toString()));
-        });
+        builder.setPositiveButton("Update", (dialog, which) -> updateTask(taskID, inputTitle.getText().toString(), inputDescription.getText().toString(),
+                typeSpinner.getSelectedItem().toString(), selectedDate,
+                parseTime(inputStartTime.getText().toString()), parseTime(inputEndTime.getText().toString()),
+                Integer.parseInt(inputPriority.getText().toString()), Integer.parseInt(inputCompleted.getText().toString())));
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
