@@ -12,35 +12,37 @@
         <item
             android:id="@+id/nav_notes"
             android:title="@string/notes"
-            android:icon="@drawable/notes" />
+            android:icon="@drawable/baseline_content_paste_24" />
 
         <item android:id="@+id/nav_budget"
             android:title="@string/budget"
-            android:icon="@drawable/budget" />
+            android:icon="@drawable/baseline_attach_money_24" />
 
         <item
             android:id="@+id/nav_weather"
             android:title="@string/Weather"
-            android:icon="@drawable/weather" />
+            android:icon="@drawable/baseline_ac_unit_24" />
 
         <item
             android:id="@+id/nav_task"
             android:title="@string/Task"
-            android:icon="@drawable/task" />
+            android:icon="@drawable/baseline_add_task_24" />
 
         <item
             android:id="@+id/nav_inventory"
             android:title="@string/inventory"
-            android:icon="@drawable/inventory" />
+            android:visible="true"
+            android:icon="@drawable/baseline_inventory_24" />
 
         <item
             android:id="@+id/nav_chart"
             android:title="@string/budget_charts"
-            android:icon="@drawable/chart" />
+            android:icon="@drawable/baseline_add_chart_24" />
 
         <item
             android:id="@+id/nav_weather_chart"
             android:title="@string/weather_charts"
-            android:icon="@drawable/weatherchart" />
+            android:visible="true"
+            android:icon="@drawable/baseline_addchart_24" />
     </group>
 </menu>

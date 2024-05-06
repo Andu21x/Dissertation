@@ -9,38 +9,46 @@
         android:id="@+id/autoCompleteCityTextView"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Enter City Name"
+        android:hint="@string/enter_city_name"
+        android:textColorHint="@color/black"
         android:completionHint="Select a city" />
 
     <Button
         android:id="@+id/buttonFetchWeather"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Fetch Weather" />
+        android:text="@string/fetch_weather_for_today" />
 
     <Button
         android:id="@+id/buttonDatePicker"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Select Date" />
+        android:text="@string/select_specifc_date" />
 
     <Button
         android:id="@+id/buttonFetchWeather5Days"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Fetch Weather 5 Days from Now" />
+        android:text="@string/fetch_weather_5_days_from_now" />
 
     <CheckBox
         android:id="@+id/checkbox_weather_alert"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Alert me if precipitation is over 50%"
+        android:text="@string/alert_me_if_precipitation_is_over_50"
+        android:textSize="17sp"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
         android:padding="8dp" />
 
     <TextView
         android:id="@+id/weather_description_text_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Weather Description"
+        android:text="@string/weather_description"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
         android:textSize="19sp" />
 </LinearLayout>

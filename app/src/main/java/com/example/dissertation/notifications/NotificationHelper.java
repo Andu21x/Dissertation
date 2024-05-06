@@ -68,7 +68,8 @@ public class NotificationHelper {
         intent.putExtra("type", type);
 
 
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, requestCode, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0));
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

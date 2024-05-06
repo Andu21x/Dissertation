@@ -10,20 +10,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="48dp"
-        android:text="Add Item" />
+        android:text="@string/add_item_s" />
 
 
     <Button
         android:id="@+id/buttonLoadAll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Load All" />
+        android:text="@string/load_all_items" />
 
     <Button
         android:id="@+id/buttonFilter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Filter" />
+        android:text="@string/filter_by" />
 
     <ListView
         android:id="@+id/listViewItems"

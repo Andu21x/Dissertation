@@ -8,27 +8,31 @@
         android:id="@+id/cityNameTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Enter City Name"
+        android:hint="@string/enter_city_name2"
+        android:textColorHint="@color/black"
         android:completionHint="Select a city" />
 
     <EditText
         android:id="@+id/startDatePicker"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Start Date"
+        android:hint="@string/start_date2"
+        android:textColorHint="@color/black"
         android:focusable="false"/>
 
     <EditText
         android:id="@+id/endDatePicker"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="End Date"
+        android:hint="@string/end_date2"
+        android:textColorHint="@color/black"
         android:focusable="false"/>
 
     <Spinner
         android:id="@+id/weatherChartTypeSpinner"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:tooltipText="Choose chart type"
+        android:layout_height="48dp"/>
 
     <com.github.mikephil.charting.charts.LineChart
         android:id="@+id/weatherChart"

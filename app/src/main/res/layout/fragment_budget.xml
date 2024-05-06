@@ -9,7 +9,10 @@
         android:id="@+id/textViewAggregateTotal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Aggregate Total: $0.00"
+        android:text="@string/aggregate_total_0_00"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
         android:textSize="18sp"
         android:gravity="center"/>
 
@@ -22,40 +25,55 @@
         android:id="@+id/editTextBudgetType"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Type" />
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
+        android:hint="@string/type" />
 
     <EditText
         android:id="@+id/editTextBudgetDescription"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Description" />
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
+        android:hint="@string/description" />
 
     <EditText
         android:id="@+id/editTextBudgetQuantity"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Quantity"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
+        android:hint="@string/quantity"
         android:inputType="number" />
 
     <EditText
         android:id="@+id/editTextBudgetSellingPrice"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Selling Price"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
+        android:hint="@string/price_amount"
         android:inputType="numberDecimal" />
 
     <EditText
         android:id="@+id/editTextBudgetDate"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Date"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
+        android:hint="@string/date"
         android:focusable="false"/>
 
     <Button
         android:id="@+id/buttonSaveBudget"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Budget" />
+        android:text="@string/save_budget" />
 
     <ListView
         android:id="@+id/listViewBudgets"

@@ -37,7 +37,7 @@ public class WeatherFragment extends Fragment {
 
     private TextView weatherDescriptionTextView;
     private OpenWeatherMapService openWeatherMapService;
-    private Calendar selectedDateTime = Calendar.getInstance();
+    private final Calendar selectedDateTime = Calendar.getInstance();
     private DatabaseHelper dbHelper;
     private CheckBox weatherAlertCheckBox;
 
@@ -55,7 +55,19 @@ public class WeatherFragment extends Fragment {
                 "Osaka", "New York", "Karachi", "Buenos Aires", "Chongqing", "Istanbul", "Kolkata", "Manila",
                 "Lagos", "Rio de Janeiro", "Tianjin", "Kinshasa", "Rome", "Lisbon", "Athens", "Berlin", "Honolulu",
                 "Vienna", "Bangkok", "Madrid", "Paris", "Prague", "Valletta", "Abu Dhabi", "Dublin", "London",
-                "Budapest", "Bucharest", "Toronto", "San Juan", "Bogota", "Cape Town", "Austin", "Moscow"
+                "Budapest", "Bucharest", "Toronto", "San Juan", "Bogota", "Cape Town", "Austin", "Moscow",
+                "Barcelona", "Los Angeles", "San Francisco", "Seattle", "Washington DC", "Miami", "Orlando",
+                "Chicago", "Montreal", "Vancouver", "Calgary", "Edmonton", "Halifax", "Ottawa", "Havana",
+                "Kingston", "Panama City", "Caracas", "Lima", "Santiago", "Belo Horizonte", "Brasilia",
+                "Montevideo", "Amsterdam", "Rotterdam", "Munich", "Frankfurt", "Hamburg", "Cologne",
+                "Stockholm", "Gothenburg", "Oslo", "Copenhagen", "Helsinki", "Zurich", "Geneva",
+                "Luxembourg", "Brussels", "Antwerp", "Warsaw", "Krakow", "Milan", "Naples", "Turin", "Venice",
+                "Florence", "Jerusalem", "Tel Aviv", "Beirut", "Kuwait City", "Doha", "Dubai", "Melbourne", "Sydney",
+                "Brisbane", "Perth", "Auckland", "Wellington", "Christchurch", "Ankara", "Kyiv", "Lviv", "Glasgow",
+                "Edinburgh", "Belfast", "Cardiff", "Manchester", "Birmingham", "Leeds", "Liverpool", "Southampton",
+                "Portsmouth", "Newcastle", "Sheffield", "Constanta", "Brasov", "Chengdu", "Porto", "Geneva",
+                "Saint Petersburg", "Belgrade", "Sofia", "Marseille", "Seville", "Stuttgart", "Palermo",
+                "Leipzig", "Toulouse", "Dortmund", "Lyon", "Bologna", "Palma de Mallorca", "Varna"
         );
 
         // Create an ArrayAdapter for the AutoCompleteTextView
@@ -224,7 +236,7 @@ public class WeatherFragment extends Fragment {
     }
 
     private void showErrorToast() {
-        Toast.makeText(getContext(), "Failed to load weather data", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), "Failed to load weather data. Correct city name? Max 5days/120 hours from now?", Toast.LENGTH_LONG).show();
     }
 
     private void fetchWeather5Days(String city) {

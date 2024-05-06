@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:minHeight="48dp"
         android:hint="@string/title"
+        android:textColorHint="@color/black"
         android:padding="12dp"
         tools:ignore="HardcodedText" />
 
@@ -21,6 +22,7 @@
         android:layout_height="wrap_content"
         android:minHeight="48dp"
         android:hint="@string/content"
+        android:textColorHint="@color/black"
         android:inputType="textMultiLine"
         android:padding="12dp"
         tools:ignore="HardcodedText" />

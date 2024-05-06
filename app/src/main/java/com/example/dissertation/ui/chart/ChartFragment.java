@@ -22,18 +22,17 @@ import java.util.Locale;
 
 public class ChartFragment extends Fragment {
 
-    private Spinner chartTypeSpinner;
     private BarChart chart;
     private EditText startDatePicker, endDatePicker;
     private DatabaseHelper dbHelper;
-    private Calendar startCalendar = Calendar.getInstance();
-    private Calendar endCalendar = Calendar.getInstance();
+    private final Calendar startCalendar = Calendar.getInstance();
+    private final Calendar endCalendar = Calendar.getInstance();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_chart, container, false);
 
-        chartTypeSpinner = view.findViewById(R.id.chartTypeSpinner);
+        Spinner chartTypeSpinner = view.findViewById(R.id.chartTypeSpinner);
         chart = view.findViewById(R.id.chart);
         startDatePicker = view.findViewById(R.id.startDatePicker);
         endDatePicker = view.findViewById(R.id.endDatePicker);
