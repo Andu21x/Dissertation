@@ -121,6 +121,9 @@ public class WeatherChart extends Fragment {
             case CLOUDS:
                 loader = new CloudsLoader();
                 break;
+            case RAINMM:
+                loader = new RainMmLoader();
+                break;
         }
 
         if (loader != null) {

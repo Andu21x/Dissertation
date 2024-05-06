@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "myDatabase.db";
-    private static final int DATABASE_VERSION = 24;
+    private static final int DATABASE_VERSION = 26;
 
     // Creating the tables
     private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable " +
@@ -26,7 +26,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String CREATE_PREV_WEATHER_DATA_TABLE = "CREATE TABLE prevWeatherDataTable " +
             "(prevWeatherID INTEGER PRIMARY KEY AUTOINCREMENT, cityName TEXT, country TEXT, dateTime INTEGER, temperature REAL, feels_like REAL, weather_description TEXT, clouds INTEGER, humidity INTEGER, " +
-            "wind_speed REAL, wind_deg INTEGER, wind_gust REAL, pressure INTEGER, visibility INTEGER, timezone INTEGER, sunrise INTEGER, sunset INTEGER, min_temp REAL, max_temp REAL, rain_mm REAL)";
+            "pop REAL, wind_speed REAL, wind_deg INTEGER, wind_gust REAL, pressure INTEGER, visibility INTEGER, timezone INTEGER, sunrise INTEGER, sunset INTEGER, min_temp REAL, max_temp REAL, rain_mm REAL)";
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -43,7 +43,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 24) {
+        if (oldVersion < 26) {
             db.execSQL("DROP TABLE IF EXISTS noteTable");
             db.execSQL("DROP TABLE IF EXISTS budgetTable");
             db.execSQL("DROP TABLE IF EXISTS taskTable");
@@ -52,12 +52,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             onCreate(db);
         }
     }
-
-
-
-
-
-
 
 
     // Insert data methods for all tables and their respective values
@@ -112,9 +106,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public void insertPrevWeatherData(String cityName, String country, long dateTime, double temperature, double feelsLike,
-                                      String description, int clouds, int humidity, double windSpeed, int windDeg,
+                                      String description, int clouds, int humidity, double pop, double rainMm, double windSpeed, int windDeg,
                                       double windGust, int pressure, int visibility, int timezone, long sunrise,
-                                      long sunset, double minTemp, double maxTemp, double rainMm) {
+                                      long sunset, double minTemp, double maxTemp) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("cityName", cityName);
@@ -125,6 +119,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("weather_description", description);
         values.put("clouds", clouds);
         values.put("humidity", humidity);
+        values.put("pop", pop);
+        values.put("rain_mm", rainMm);
         values.put("wind_speed", windSpeed);
         values.put("wind_deg", windDeg);
         values.put("wind_gust", windGust);
@@ -135,7 +131,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put("sunset", sunset);
         values.put("min_temp", minTemp);
         values.put("max_temp", maxTemp);
-        values.put("rain_mm", rainMm);
         db.insert("prevWeatherDataTable", null, values);
     }
 

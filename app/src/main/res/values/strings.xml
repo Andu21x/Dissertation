@@ -32,5 +32,6 @@
         <item>Temperature</item>
         <item>Humidity</item>
         <item>Clouds</item>
+        <item>Rain mm</item>
     </string-array>
 </resources>

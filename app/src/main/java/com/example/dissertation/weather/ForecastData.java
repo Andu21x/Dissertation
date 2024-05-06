@@ -1,5 +1,7 @@
 package com.example.dissertation.weather;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.List;
 
 public class ForecastData {
@@ -21,7 +23,7 @@ public class ForecastData {
         private Wind wind;
         private Rain rain;
         private Clouds clouds;
-
+        private double pop;
         private int visibility;
 
         public Main getMain() {
@@ -48,6 +50,10 @@ public class ForecastData {
             return clouds;
         }
 
+        public double getPop() {
+            return pop;
+        }
+
         public int getVisibility() {
             return visibility;
         }
@@ -72,6 +78,7 @@ public class ForecastData {
         }
 
         public static class Rain {
+            @SerializedName("3h")
             public double h3;
         }
 

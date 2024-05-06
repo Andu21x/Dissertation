@@ -69,7 +69,17 @@ public class WeatherFragment extends Fragment {
         buttonFetchWeather.setOnClickListener(v -> {
             String city = cityTextView.getText().toString(); // Read the city from AutoCompleteTextView
             if (!city.isEmpty()) {
-                loadWeatherData(city);
+                loadWeatherData(city); // Use the 1 parameter version
+            } else {
+                Toast.makeText(getContext(), "Please enter a city name", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        Button buttonFetchWeather5Days = view.findViewById(R.id.buttonFetchWeather5Days);
+        buttonFetchWeather5Days.setOnClickListener(v -> {
+            String city = cityTextView.getText().toString().trim(); // Ensure there's no leading/trailing whitespace
+            if (!city.isEmpty()) {
+                fetchWeather5Days(city); // Call the method to fetch weather 5 days in advance
             } else {
                 Toast.makeText(getContext(), "Please enter a city name", Toast.LENGTH_SHORT).show();
             }
@@ -112,6 +122,11 @@ public class WeatherFragment extends Fragment {
     }
 
     private void loadWeatherData(String city) {
+        long currentTime = System.currentTimeMillis() / 1000; // Current time in seconds
+        loadWeatherData(city, currentTime);
+    }
+
+    private void loadWeatherData(String city, long timestamp) {
         String apiKey = "83eb8c7321549e147b8d74d3c9796331";
 
         if (openWeatherMapService == null) {
@@ -129,14 +144,12 @@ public class WeatherFragment extends Fragment {
                         List<ForecastData.Forecast> forecasts = forecastData.getForecastList();
                         ForecastData.City city = forecastData.getCity();
 
-                        // Convert selected datetime to Unix timestamp
-                        long selectedTimestamp = selectedDateTime.getTimeInMillis() / 1000; // Get the date in seconds
-
+                        // Find the forecast closest to the provided timestamp
                         ForecastData.Forecast closestForecast = null;
                         long minTimeDiff = Long.MAX_VALUE;
 
                         for (ForecastData.Forecast forecast : forecasts) {
-                            long timeDiff = Math.abs(forecast.getDt() - selectedTimestamp);
+                            long timeDiff = Math.abs(forecast.getDt() - timestamp); // Use provided timestamp
 
                             if (timeDiff < minTimeDiff) {
                                 minTimeDiff = timeDiff;
@@ -183,7 +196,9 @@ public class WeatherFragment extends Fragment {
                     .append("\n" + "Clouds: ").append(forecast.getClouds().all).append("%")
                     .append("\n" + "Date: ").append(formattedDate)
                     .append("\n" + "\n" + "Humidity: ").append(forecast.getMain().humidity).append("%")
-                    .append("\n" + "Wind: ").append(forecast.getWind().speed).append(" m/s at ").append(forecast.getWind().deg).append("°")
+                    .append("\n" + "Probability of Precipitation: ").append(String.format(Locale.UK, "%.0f%%", forecast.getPop() * 100))
+                    .append("\n" + "Rain: ").append(forecast.getRain() != null ? forecast.getRain().h3 : 0.0).append(" mm/3h")
+                    .append("\n" + "\n" + "Wind: ").append(forecast.getWind().speed).append(" m/s at ").append(forecast.getWind().deg).append("°")
                     .append("\n" + "Wind Gust: ").append(forecast.getWind().gust).append(" m/s")
                     .append("\n" + "Pressure: ").append(forecast.getMain().pressure).append(" hPa")
                     .append("\n" + "Visibility: ").append(forecast.getVisibility()).append(" m")
@@ -192,11 +207,6 @@ public class WeatherFragment extends Fragment {
                     .append("\n" + "Sunset: ").append(formattedSunset)
                     .append("\n" + "Min Temp: ").append(String.format(Locale.UK, "%.0f°C", forecast.getMain().temp_min - 273.15))
                     .append("\n" + "Max Temp: ").append(String.format(Locale.UK, "%.0f°C", forecast.getMain().temp_max - 273.15));
-
-            // Avoid crashes when rain is null, sometimes it can be null
-            if (forecast.getRain() != null) {
-                weatherInfo.append("\n" + "Rain: ").append(forecast.getRain().h3).append(" mm/3h");
-            }
 
             // Displaying the constructed weather information
             weatherDescriptionTextView.setText(weatherInfo.toString());
@@ -210,6 +220,17 @@ public class WeatherFragment extends Fragment {
         Toast.makeText(getContext(), "Failed to load weather data", Toast.LENGTH_SHORT).show();
     }
 
+    private void fetchWeather5Days(String city) {
+        long currentTime = System.currentTimeMillis() / 1000; // Get current time in seconds
+        long threeHours = 3 * 3600; // 3 hours in seconds
+
+        // Set the time to the current time, loop through and add three hours to time until time
+        // Is less than 5 days from the current time
+        for (long time = currentTime; time <= currentTime + 5 * 24 * 3600; time += threeHours) {
+            loadWeatherData(city, time); // Use the two-parameter version
+        }
+    }
+
     private void logAndInsertWeatherData(ForecastData.Forecast forecast, ForecastData.City city) {
         // Log the data before inserting it
         Log.d("WeatherData", "Inserting weather data into database:");
@@ -221,6 +242,8 @@ public class WeatherFragment extends Fragment {
         Log.d("WeatherData", "Description: " + forecast.getWeather().get(0).description);
         Log.d("WeatherData", "Clouds: " + forecast.getClouds().all);
         Log.d("WeatherData", "Humidity: " + forecast.getMain().humidity);
+        Log.d("WeatherData", "Probability of precipitation: " + forecast.getPop() * 100 + "%");
+        Log.d("WeatherData", "Rain: " + (forecast.getRain() != null ? forecast.getRain().h3 : 0.0f));
         Log.d("WeatherData", "Wind Speed: " + forecast.getWind().speed);
         Log.d("WeatherData", "Wind Degree: " + forecast.getWind().deg);
         Log.d("WeatherData", "Wind Gust: " + forecast.getWind().gust);
@@ -231,7 +254,6 @@ public class WeatherFragment extends Fragment {
         Log.d("WeatherData", "Sunset: " + city.getSunset());
         Log.d("WeatherData", "Min Temperature: " + (forecast.getMain().temp_min - 273.15f));
         Log.d("WeatherData", "Max Temperature: " + (forecast.getMain().temp_max - 273.15f));
-        Log.d("WeatherData", "Rain: " + (forecast.getRain() != null ? forecast.getRain().h3 : 0.0f));
 
         // Insert the data into the database
         dbHelper.insertPrevWeatherData(
@@ -243,6 +265,8 @@ public class WeatherFragment extends Fragment {
                 forecast.getWeather().get(0).description,
                 forecast.getClouds().all,
                 forecast.getMain().humidity,
+                forecast.getPop() * 100,
+                forecast.getRain() != null ? forecast.getRain().h3 : 0.0f,
                 forecast.getWind().speed,
                 forecast.getWind().deg,
                 forecast.getWind().gust,
@@ -252,8 +276,7 @@ public class WeatherFragment extends Fragment {
                 city.getSunrise(),
                 city.getSunset(),
                 forecast.getMain().temp_min - 273.15f,
-                forecast.getMain().temp_max - 273.15f,
-                forecast.getRain() != null ? forecast.getRain().h3 : 0.0f
+                forecast.getMain().temp_max - 273.15f
         );
     }
 }
