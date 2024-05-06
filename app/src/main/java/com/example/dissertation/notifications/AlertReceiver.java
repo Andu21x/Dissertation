@@ -10,12 +10,18 @@ public class AlertReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         Log.d("AlertReceiver", "Alarm received!");
 
-        // Retrieve the notification ID
-        int notificationId = intent.getIntExtra("notification_id", 0);  // Default to 0 if not found
+        int notificationId = intent.getIntExtra("notification_id", 0);
         String title = intent.getStringExtra("title");
         String content = intent.getStringExtra("content");
-        Log.d("AlertReceiver", "Received with title: " + title + " and content: " + content); // Log details
+        String type = intent.getStringExtra("type");  // "task" or "weather"
+
+        Log.d("AlertReceiver", "Received with title: " + title + ", content: " + content + ", type: " + type);
+
         NotificationHelper notificationHelper = new NotificationHelper(context);
-        notificationHelper.sendTaskNotification(notificationId, title, content);  // Use the retrieved ID
+        if ("weather".equals(type)) {
+            notificationHelper.sendWeatherNotification(notificationId, title, content);
+        } else {
+            notificationHelper.sendTaskNotification(notificationId, title, content);
+        }
     }
 }

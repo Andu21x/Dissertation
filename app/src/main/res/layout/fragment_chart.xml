@@ -8,20 +8,26 @@
         android:id="@+id/startDatePicker"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="Start Date"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
+        android:hint="@string/start_date"
         android:focusable="false"/>
 
     <EditText
         android:id="@+id/endDatePicker"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:hint="End Date"
+        android:textColor="@color/black"
+        android:shadowColor="@color/black"
+        android:textColorHint="@color/black"
+        android:hint="@string/end_date"
         android:focusable="false"/>
 
     <Spinner
         android:id="@+id/chartTypeSpinner"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="48dp"/>
 
     <com.github.mikephil.charting.charts.BarChart
         android:id="@+id/chart"

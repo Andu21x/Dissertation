@@ -298,7 +298,7 @@ public class TaskFragment extends Fragment {
             if (alarmCheckbox.isChecked()) {
                 long notificationTime = convertToTimestampWithTime(selectedDate, inputStartTime.getText().toString());
                 Log.d(TAG, "Scheduling notification at: " + new Date(notificationTime).toString() + " with title: " + title);
-                notificationHelper.scheduleNotification(notificationTime, title, "Reminder: " + title);
+                notificationHelper.scheduleNotification(notificationTime, title, "Reminder: " + title, "task");
             }
         });
 

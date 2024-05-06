@@ -8,14 +8,7 @@
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_menu_camera"
             android:title="@string/menu_home" />
-        <item
-            android:id="@+id/nav_gallery"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="@string/menu_gallery" />
-        <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="@string/menu_slideshow" />
+
         <item
             android:id="@+id/nav_notes"
             android:title="@string/notes"
@@ -27,18 +20,13 @@
 
         <item
             android:id="@+id/nav_weather"
-            android:title="@string/weather"
+            android:title="@string/Weather"
             android:icon="@drawable/weather" />
 
         <item
             android:id="@+id/nav_task"
-            android:title="@string/task"
+            android:title="@string/Task"
             android:icon="@drawable/task" />
-
-        <item
-            android:id="@+id/nav_chart"
-            android:title="@string/chart"
-            android:icon="@drawable/chart" />
 
         <item
             android:id="@+id/nav_inventory"
@@ -46,8 +34,13 @@
             android:icon="@drawable/inventory" />
 
         <item
+            android:id="@+id/nav_chart"
+            android:title="@string/budget_charts"
+            android:icon="@drawable/chart" />
+
+        <item
             android:id="@+id/nav_weather_chart"
-            android:title="Weather chart"
+            android:title="@string/weather_charts"
             android:icon="@drawable/weatherchart" />
     </group>
 </menu>

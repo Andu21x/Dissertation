@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -21,6 +22,7 @@ import androidx.fragment.app.Fragment;
 
 import com.example.dissertation.DatabaseHelper;
 import com.example.dissertation.R;
+import com.example.dissertation.notifications.NotificationHelper;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -37,6 +39,7 @@ public class WeatherFragment extends Fragment {
     private OpenWeatherMapService openWeatherMapService;
     private Calendar selectedDateTime = Calendar.getInstance();
     private DatabaseHelper dbHelper;
+    private CheckBox weatherAlertCheckBox;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -75,11 +78,15 @@ public class WeatherFragment extends Fragment {
             }
         });
 
+        weatherAlertCheckBox = view.findViewById(R.id.checkbox_weather_alert); // Find the checkbox
         Button buttonFetchWeather5Days = view.findViewById(R.id.buttonFetchWeather5Days);
         buttonFetchWeather5Days.setOnClickListener(v -> {
             String city = cityTextView.getText().toString().trim(); // Ensure there's no leading/trailing whitespace
             if (!city.isEmpty()) {
                 fetchWeather5Days(city); // Call the method to fetch weather 5 days in advance
+                if (weatherAlertCheckBox.isChecked()) {
+                    scheduleWeatherNotifications(); // Schedule notifications if the checkbox is checked
+                }
             } else {
                 Toast.makeText(getContext(), "Please enter a city name", Toast.LENGTH_SHORT).show();
             }
@@ -229,6 +236,11 @@ public class WeatherFragment extends Fragment {
         for (long time = currentTime; time <= currentTime + 5 * 24 * 3600; time += threeHours) {
             loadWeatherData(city, time); // Use the two-parameter version
         }
+    }
+
+    private void scheduleWeatherNotifications() {
+        NotificationHelper notificationHelper = new NotificationHelper(getContext());
+        notificationHelper.scheduleWeatherNotifications(); // Scheduling weather notifications
     }
 
     private void logAndInsertWeatherData(ForecastData.Forecast forecast, ForecastData.City city) {

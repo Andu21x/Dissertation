@@ -226,6 +226,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.rawQuery(query, selectionArgs);
     }
 
+    public Cursor getHighPopForecasts(long startTime, long endTime) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM prevWeatherDataTable WHERE dateTime BETWEEN ? AND ? AND pop > 50", new String[]{String.valueOf(startTime), String.valueOf(endTime)});
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Update data methods
     public void updateNote(int id, String title, String content) {
