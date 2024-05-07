@@ -5,7 +5,7 @@ When filtering budget dates remember to set a day back and a day forward from yo
 (something I'm still wondering how to fix, but no more time)
 
 The weather alarm will be sent 5 seconds and then every 3 seconds for every subsequent time where probability of 
-precipitation is high
+precipitation is high (>= 70)
 
 The submitted branch is the "finished" one
 
