@@ -116,22 +116,22 @@ public class NotificationHelper {
             if (cursor != null) {
                 int delayIncrement = 0; // Introduce a manual delay to prevent alarm spamming
                 Log.d("DatabaseHelper", "Number of entries fetched: " + cursor.getCount());
-
                 if (cursor.moveToFirst()) {
                     do {
-                    long dateTime = cursor.getLong(cursor.getColumnIndex("dateTime"));
-                    String description = cursor.getString(cursor.getColumnIndex("weather_description"));
+                        long dateTime = cursor.getLong(cursor.getColumnIndex("dateTime"));
+                        String description = cursor.getString(cursor.getColumnIndex("weather_description"));
 
-                    String title = "Weather Alert!";
-                    String content = String.format(Locale.UK, "High chance of rain on %s. Details: %s",
-                            new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK).format(new java.util.Date(dateTime * 1000)),
-                            description);
 
-                    // Schedule the notification, making sure to convert the notificationTime to milliseconds, as "triggerAtMillis" requires milliseconds
-                    scheduleNotification(System.currentTimeMillis() + 5000 + (1500L * delayIncrement), title, content, "weather"); // Pass "weather" as the type
-                    Log.d(TAG, "Schedule notification at: " + System.currentTimeMillis() + 5000 + (1500L * delayIncrement) +  " with title: " + title + " and content: " + content);
+                        String title = "Weather Alert!";
+                        String content = String.format(Locale.UK, "High chance of rain on %s. Details: %s",
+                                new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK).format(new java.util.Date(dateTime * 1000)),
+                                description);
 
-                    delayIncrement++; // Increase the delay increment for the next notification
+                        // Schedule the notification, making sure to convert the notificationTime to milliseconds, as "triggerAtMillis" requires milliseconds
+                        scheduleNotification(System.currentTimeMillis() + 5000 + (3000L * delayIncrement), title, content, "weather"); // Pass "weather" as the type
+                        Log.d(TAG, "Schedule notification at: " + System.currentTimeMillis() + 5000 + (1500 * delayIncrement) +  " with title: " + title + " and content: " + content);
+
+                        delayIncrement++; // Increase the delay increment for the next notification
                     } while (cursor.moveToNext());
                 }
             }
@@ -139,6 +139,7 @@ public class NotificationHelper {
             Log.e(TAG, "Error scheduling weather notifications", e);
         }
     }
+
 
     public void sendTaskNotification(int notificationId, String title, String content) {
         Log.d(TAG, "sendTaskNotification ID at the top: " + notificationId);
