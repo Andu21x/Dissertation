@@ -65,6 +65,7 @@ public class PositiveBudgetsLoader implements ChartLoader {
             int index = 0;
 
             // Create entries for chart, iterate over each entry in the map
+            // Inspirited for loop from: https://www.youtube.com/watch?v=Lt_VyD-b9_0&t=928s
             for (Map.Entry<String, Float> entry : dateTotalMap.entrySet()) {
                 String date = entry.getKey();
                 float total = entry.getValue();

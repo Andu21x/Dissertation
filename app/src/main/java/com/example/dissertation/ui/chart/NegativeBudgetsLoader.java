@@ -1,4 +1,5 @@
 // Heavily inspired by https://weeklycoding.com/mpandroidchart-documentation/
+// Some inspiration from https://www.youtube.com/watch?v=Lt_VyD-b9_0&t=928s
 
 package com.example.dissertation.ui.chart;
 
@@ -65,6 +66,7 @@ public class NegativeBudgetsLoader implements ChartLoader {
             int index = 0;
 
             // Create entries for chart, iterate over each entry in the map
+            // Inspirited for loop from: https://www.youtube.com/watch?v=Lt_VyD-b9_0&t=928s
             for (Map.Entry<String, Float> entry : dateTotalsMap.entrySet()) {
                 String date = entry.getKey();
                 float total = entry.getValue();

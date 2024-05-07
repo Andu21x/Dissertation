@@ -86,7 +86,7 @@ public class ChartFragment extends Fragment {
                 calendar.get(Calendar.DAY_OF_MONTH)).show();
     }
 
-    // Updates the editTextBudgetDate with the date selected from the DatePickerDialog
+    // Updates the editText with the date selected from the DatePickerDialog
     // formatted as dd/MM/yyyy. This method is called after the user sets a date.
     private void updateLabel(EditText editText, Calendar calendar) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.UK);
