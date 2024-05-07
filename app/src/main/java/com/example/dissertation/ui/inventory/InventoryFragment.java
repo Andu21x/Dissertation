@@ -1,3 +1,5 @@
+// Heavily inspired by https://developer.android.com/develop/ui/views/layout/declaring-layout?authuser=2#java
+
 package com.example.dissertation.ui.inventory;
 
 import android.annotation.SuppressLint;
@@ -27,58 +29,73 @@ public class InventoryFragment extends Fragment {
     private Spinner spinnerType, spinnerSubType;
     private ArrayAdapter<String> adapter;
     private DatabaseHelper dbHelper;
-    private List<Integer> itemIDs;
+    private List<Integer> itemIds;
     private final Map<String, List<String>> typeSubTypeMapping = new HashMap<>();
 
     @SuppressLint("Range")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Set up the view and link our .xml file to it
         View view = inflater.inflate(R.layout.fragment_inventory, container, false);
 
+        // Initialize views by their specific IDs
         ListView listViewItems = view.findViewById(R.id.listViewItems);
         Button buttonAddItem = view.findViewById(R.id.buttonAddItem);
         Button buttonFilter = view.findViewById(R.id.buttonFilter);
         Button buttonLoadAll = view.findViewById(R.id.buttonLoadAll);
 
+        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
         dbHelper = new DatabaseHelper(getActivity());
-        itemIDs = new ArrayList<>();
+
+        // Create an array list to hold the ID's
+        itemIds = new ArrayList<>();
+
+        // Initialize the adapter, setting this fragment as context
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, new ArrayList<>());
         listViewItems.setAdapter(adapter);
 
         loadItems(); // Load data early to ensure UI is populated before any user interaction
 
+        // Click listener to save item data when pressed
         buttonAddItem.setOnClickListener(v -> saveItem());
 
+        // Click listener to show the update dialog menu when an item entry is clicked
         listViewItems.setOnItemClickListener((parent, view1, position, id) -> {
-            int itemID = itemIDs.get(position); // Retrieve the ID of the item to update
+            int itemId = itemIds.get(position); // Retrieve the ID of the item to update and save it in "itemID"
 
-            try (Cursor cursor = dbHelper.readItemByID(itemID)) {
+            // Try to find an entry at that position
+            try (Cursor cursor = dbHelper.readItemByID(itemId)) {
                 if (cursor.moveToFirst()) {
+                    // Gather all the data we need from the SQL
                     String itemName = cursor.getString(cursor.getColumnIndex("itemName"));
                     int itemQuantity = cursor.getInt(cursor.getColumnIndex("itemQuantity"));
                     String itemType = cursor.getString(cursor.getColumnIndex("itemType"));
                     String itemSubType = cursor.getString(cursor.getColumnIndex("itemSubType"));
                     String itemDescription = cursor.getString(cursor.getColumnIndex("itemDescription"));
 
-                    showUpdateDialog(itemID, itemName, itemQuantity, itemType, itemSubType, itemDescription);
+                    showUpdateDialog(itemId, itemName, itemQuantity, itemType, itemSubType, itemDescription);
                 }
             } catch (Exception e) {
                 Toast.makeText(getActivity(), "Error loading item: " + e.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
 
+        // Long click listener to double check the user wants to delete
         listViewItems.setOnItemLongClickListener((parent, view12, position, id) -> {
-            confirmDeletion(itemIDs.get(position)); // Retrieve the ID of the item to delete
+            confirmDeletion(itemIds.get(position)); // Retrieve the ID of the item to delete
             return true;
         });
 
+        // Click listener to filter item data when pressed
         buttonFilter.setOnClickListener(v -> showFilterDialog());
 
+        // Click listener to load item data when pressed
         buttonLoadAll.setOnClickListener(v -> loadItems());
 
         return view;
     }
 
+    // Save all entries inputted by the user
     private void saveItem() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         initializeTypeSubTypeMapping();
@@ -166,14 +183,17 @@ public class InventoryFragment extends Fragment {
         builder.show();
     }
 
+    // Handle loading items
     @SuppressLint("Range")
     private void loadItems() {
         try (Cursor cursor = dbHelper.readItem()) {
-
+            // Create a list to hold the item strings
             List<String> items = new ArrayList<>();
-            itemIDs.clear();
+
+            itemIds.clear(); // Ensure page is clear before loading
 
             while (cursor.moveToNext()) {
+                // Extract needed data from SQL
                 int id = cursor.getInt(cursor.getColumnIndex("itemID"));
                 String itemName = cursor.getString(cursor.getColumnIndex("itemName"));
                 String itemQuantity = cursor.getString(cursor.getColumnIndex("itemQuantity"));
@@ -181,13 +201,14 @@ public class InventoryFragment extends Fragment {
                 String itemSubType = cursor.getString(cursor.getColumnIndex("itemSubType"));
                 String itemDescription = cursor.getString(cursor.getColumnIndex("itemDescription"));
 
+                // Build the string with the extracted data
                 String itemDetails = itemName +
                         " (" + itemQuantity +
                         ") - " + itemType +
                         " (" + itemSubType +
                         ")" + "\n" + itemDescription;
                 items.add(itemDetails);
-                itemIDs.add(id);
+                itemIds.add(id);
             }
             adapter.clear();
             adapter.addAll(items);
@@ -198,9 +219,10 @@ public class InventoryFragment extends Fragment {
         }
     }
 
-    private void deleteItem(int itemID) {
+    // Handle deletion and visual feedback for the user
+    private void deleteItem(int itemId) {
         try {
-            dbHelper.deleteItem(itemID);
+            dbHelper.deleteItem(itemId);
             Toast.makeText(getActivity(), "Item deleted", Toast.LENGTH_SHORT).show();
 
             loadItems(); // Reload the items to reflect the deletion
@@ -209,17 +231,19 @@ public class InventoryFragment extends Fragment {
         }
     }
 
-    private void confirmDeletion(int itemID) {
+    // Show an alert dialog to make sure the user intends to delete
+    private void confirmDeletion(int itemId) {
         new AlertDialog.Builder(requireActivity())
                 .setTitle("Delete Item")
                 .setMessage("Are you sure you want to delete this item?")
-                .setPositiveButton("Delete", (dialog, which) -> deleteItem(itemID))
+                .setPositiveButton("Delete", (dialog, which) -> deleteItem(itemId))
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
+    // Handle the construction and interaction of the update dialog pop up
     @SuppressLint("Range")
-    private void showUpdateDialog(int itemID, String currentName, int currentQuantity, String currentType, String currentSubType, String currentDescription) {
+    private void showUpdateDialog(int itemId, String currentName, int currentQuantity, String currentType, String currentSubType, String currentDescription) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
 
         // Set up the input fields
@@ -294,19 +318,20 @@ public class InventoryFragment extends Fragment {
                 String itemSubType = spinnerSubType.getSelectedItem().toString();
                 String itemDescription = editTextDescription.getText().toString();
 
-                updateItem(itemID, itemName, itemQuantity, itemType, itemSubType, itemDescription);
+                updateItem(itemId, itemName, itemQuantity, itemType, itemSubType, itemDescription);
             } catch (NumberFormatException e) {
                 Toast.makeText(getContext(), "Please enter valid numbers for quantity.", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
                 Toast.makeText(getContext(), "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
+        // Display the built dialog
         builder.show();
     }
 
+    // Build the show filter pop-up dialog
     private void showFilterDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         initializeTypeSubTypeMapping();
@@ -372,18 +397,21 @@ public class InventoryFragment extends Fragment {
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
+        // Display the built dialog
         builder.show();
     }
 
+    // Handle loading filtered items
     @SuppressLint("Range")
     private void loadFilteredItems(String type, String subtype) {
         try (Cursor cursor = dbHelper.readFilteredItems(type, subtype)) {
-
+            // Create an array list to hold the item strings
             List<String> items = new ArrayList<>();
 
-            itemIDs.clear();
+            itemIds.clear(); // Ensure page is clear before loading
 
             while (cursor.moveToNext()) {
+                // Extract needed data from SQL
                 int id = cursor.getInt(cursor.getColumnIndex("itemID"));
                 String itemName = cursor.getString(cursor.getColumnIndex("itemName"));
                 String itemQuantity = cursor.getString(cursor.getColumnIndex("itemQuantity"));
@@ -391,13 +419,14 @@ public class InventoryFragment extends Fragment {
                 String itemSubType = cursor.getString(cursor.getColumnIndex("itemSubType"));
                 String itemDescription = cursor.getString(cursor.getColumnIndex("itemDescription"));
 
+                // Build the string with the extracted data
                 String itemDetails = itemName + " (" +
                         itemQuantity + ") - " +
                         itemType + " (" +
                         itemSubType + ")" +
                         "\n" + itemDescription;
                 items.add(itemDetails);
-                itemIDs.add(id);
+                itemIds.add(id);
             }
             adapter.clear();
             adapter.addAll(items);
@@ -407,6 +436,7 @@ public class InventoryFragment extends Fragment {
         }
     }
 
+    // Initialize all Types and their respective SubTypes
     private void initializeTypeSubTypeMapping() {
         typeSubTypeMapping.put("Crop Products", Arrays.asList("Seeds", "Fertilizers", "Pesticides", "Herbicides", "Other"));
         typeSubTypeMapping.put("Livestock Products", Arrays.asList("Feed", "Veterinary supplies", "Other"));
@@ -439,9 +469,10 @@ public class InventoryFragment extends Fragment {
         ));
     }
 
-    private void updateItem(int itemID, String itemName, int itemQuantity, String itemType, String itemSubType, String itemDescription) {
+    // Handle updating and visual feedback for the user
+    private void updateItem(int itemId, String itemName, int itemQuantity, String itemType, String itemSubType, String itemDescription) {
         try {
-            dbHelper.updateItem(itemID, itemName, itemQuantity, itemType, itemSubType, itemDescription);
+            dbHelper.updateItem(itemId, itemName, itemQuantity, itemType, itemSubType, itemDescription);
             Toast.makeText(getActivity(), "Item Updated", Toast.LENGTH_SHORT).show();
 
             loadItems(); // Reload the list of items to reflect the update

@@ -39,30 +39,41 @@ public class NotesFragment extends Fragment {
     @Override
     @SuppressLint("Range")
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Set up the view and link our .xml file to it
         View view = inflater.inflate(R.layout.fragment_notes, container, false);
 
+        // Initialize views by their specific IDs
         editTextTitle = view.findViewById(R.id.editTextTitle);
         editTextContent = view.findViewById(R.id.editTextContent);
         ListView listViewNotes = view.findViewById(R.id.listViewNotes);
         Button buttonSave = view.findViewById(R.id.buttonSave);
         Button buttonTrash = view.findViewById(R.id.buttonTrash);
 
+        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
         dbHelper = new DatabaseHelper(getActivity());
+
+        // Create an array list to hold the ID's
         noteIds = new ArrayList<>();
+
+        // Initialize the adapter, setting this fragment as context
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, new ArrayList<>());
         listViewNotes.setAdapter(adapter);
 
         loadNotes();  // Load data early to ensure UI is populated before any user interaction
 
+        // Click listener to save note data when pressed
         buttonSave.setOnClickListener(v -> saveNote());
 
+        // Click listener to open trash note page when pressed
         buttonTrash.setOnClickListener(v -> openTrash());
 
-        // Click listener for updating a note
+        // Click listener to show the update dialog menu when an note entry is clicked
         listViewNotes.setOnItemClickListener((parent, view1, position, id) -> {
-            int noteId = noteIds.get(position);
+            int noteId = noteIds.get(position); // Retrieve the ID of the note to update and save it in "noteId"
+
             try (Cursor cursor = dbHelper.readNoteById(noteId)) {
                 if (cursor.moveToFirst()) {
+                    // Extract needed data from SQL
                     String title = cursor.getString(cursor.getColumnIndex("title"));
                     String content = cursor.getString(cursor.getColumnIndex("content"));
                     showUpdateDialog(noteId, title, content);
@@ -81,6 +92,7 @@ public class NotesFragment extends Fragment {
         return view;
     }
 
+    // Handle saving all entries inputted by the user
     private void saveNote() {
         String title = editTextTitle.getText().toString();
         String content = editTextContent.getText().toString();
@@ -106,15 +118,22 @@ public class NotesFragment extends Fragment {
         }
     }
 
+    // Handle loading notes
     @SuppressLint("Range")
     private void loadNotes() {
         try (Cursor cursor = dbHelper.readNote()) {
+            // Create an array list to hold the note strings
             ArrayList<String> notes = new ArrayList<>();
-            noteIds.clear();
+
+            noteIds.clear(); // Ensure page is clear before loading
+
             while (cursor.moveToNext()) {
+                // Extract needed data from SQL
                 int id = cursor.getInt(cursor.getColumnIndex("noteID"));
                 String title = cursor.getString(cursor.getColumnIndex("title"));
                 String content = cursor.getString(cursor.getColumnIndex("content"));
+
+                // Add the extracted data
                 notes.add(title + "\n" + content);
                 noteIds.add(id);
             }
@@ -126,6 +145,7 @@ public class NotesFragment extends Fragment {
         }
     }
 
+    // Handle deletion and visual feedback for the user
     private void deleteNote(int noteId) {
         try {
             dbHelper.deleteNote(noteId);
@@ -137,6 +157,7 @@ public class NotesFragment extends Fragment {
         }
     }
 
+    // Show an alert dialog to make sure the user intends to delete
     private void confirmDeletion(int noteId) {
         new AlertDialog.Builder(requireActivity())
                 .setTitle("Delete Note")
@@ -146,6 +167,7 @@ public class NotesFragment extends Fragment {
                 .show();
     }
 
+    // Handle the construction and interaction of the update dialog pop up
     @SuppressLint({"Range", "SetTextI18n"})
     private void showUpdateDialog(final int noteId, String currentTitle, String currentContent) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
@@ -157,6 +179,7 @@ public class NotesFragment extends Fragment {
         // Use try-with-resources to ensure the Cursor is closed automatically
         try (Cursor cursor = dbHelper.readNote()) {
             if (cursor.moveToFirst()) {
+                // Extract needed data from SQL
                 long creationDate = cursor.getLong(cursor.getColumnIndex("creationDate"));
                 long editDate = cursor.getLong(cursor.getColumnIndex("editDate"));
 
@@ -184,8 +207,9 @@ public class NotesFragment extends Fragment {
         TextView editDateTextView = new TextView(getContext());
         editDateTextView.setText("Last Edited: " + editDateString);
 
-        // Layout to contain the EditText fields
+        // Layout to contain all input fields
         LinearLayout layout = new LinearLayout(getContext());
+
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 10, 40, 10); // Set padding around the layout
 
@@ -209,10 +233,11 @@ public class NotesFragment extends Fragment {
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
+        // Display the built dialog
         builder.show();
     }
 
-
+    // Handle updating and visual feedback for the user
     private void updateNote(int noteId, String title, String content) {
         try {
             dbHelper.updateNote(noteId, title, content);
@@ -224,6 +249,7 @@ public class NotesFragment extends Fragment {
         }
     }
 
+    // Navigate to the trash notes section
     private void openTrash() {
         NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment_content_main);
         navController.navigate(R.id.action_notes_to_trash);

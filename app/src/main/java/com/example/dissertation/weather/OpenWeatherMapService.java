@@ -1,3 +1,5 @@
+// Class implemented from https://reintech.io/blog/creating-simple-weather-app-android-openweathermap-api
+
 package com.example.dissertation.weather;
 
 import retrofit2.Call;

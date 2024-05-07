@@ -1,3 +1,6 @@
+// API Documentation: https://openweathermap.org/forecast5
+// Heavily inspired from https://reintech.io/blog/creating-simple-weather-app-android-openweathermap-api
+
 package com.example.dissertation.weather;
 
 import android.annotation.SuppressLint;
@@ -43,11 +46,19 @@ public class WeatherFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Set up the view and link our .xml file to it
         View view = inflater.inflate(R.layout.fragment_weather, container, false);
 
+        // Initialize views by their specific IDs
         weatherDescriptionTextView = view.findViewById(R.id.weather_description_text_view);
-
         AutoCompleteTextView cityTextView = view.findViewById(R.id.autoCompleteCityTextView);
+        Button buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
+        Button buttonFetchWeather = view.findViewById(R.id.buttonFetchWeather);
+        weatherAlertCheckBox = view.findViewById(R.id.checkbox_weather_alert);
+        Button buttonFetchWeather5Days = view.findViewById(R.id.buttonFetchWeather5Days);
+
+        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
+        dbHelper = new DatabaseHelper(getContext());
 
         // List of cities for auto-completion
         List<String> cityNames = Arrays.asList(
@@ -72,15 +83,14 @@ public class WeatherFragment extends Fragment {
 
         // Create an ArrayAdapter for the AutoCompleteTextView
         ArrayAdapter<String> cityAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_dropdown_item_1line, cityNames);
-
         cityTextView.setAdapter(cityAdapter); // Set the adapter
-
         cityTextView.setThreshold(1); // Show suggestions when at least 1 character is typed
 
+        // Taken from https://reintech.io/blog/creating-simple-weather-app-android-openweathermap-api
         // Initialize OpenWeatherMapService
         openWeatherMapService = ApiClient.getInstance().create(OpenWeatherMapService.class);
 
-        Button buttonFetchWeather = view.findViewById(R.id.buttonFetchWeather);
+        // Click listener for fetching weather at the given city when pressed
         buttonFetchWeather.setOnClickListener(v -> {
             String city = cityTextView.getText().toString(); // Read the city from AutoCompleteTextView
             if (!city.isEmpty()) {
@@ -90,8 +100,7 @@ public class WeatherFragment extends Fragment {
             }
         });
 
-        weatherAlertCheckBox = view.findViewById(R.id.checkbox_weather_alert); // Find the checkbox
-        Button buttonFetchWeather5Days = view.findViewById(R.id.buttonFetchWeather5Days);
+        // Click listener for fetching weather at the given city 5 days from now when pressed
         buttonFetchWeather5Days.setOnClickListener(v -> {
             String city = cityTextView.getText().toString().trim(); // Ensure there's no leading/trailing whitespace
             if (!city.isEmpty()) {
@@ -106,14 +115,12 @@ public class WeatherFragment extends Fragment {
         });
 
         // Date picker setup
-        Button buttonDatePicker = view.findViewById(R.id.buttonDatePicker);
         buttonDatePicker.setOnClickListener(v -> showDatePickerDialog());
-
-        dbHelper = new DatabaseHelper(getContext());
 
         return view;
     }
 
+    // Build the date picker pop-up for the user.
     private void showDatePickerDialog() {
         int year = selectedDateTime.get(Calendar.YEAR);
         int month = selectedDateTime.get(Calendar.MONTH);
@@ -124,11 +131,12 @@ public class WeatherFragment extends Fragment {
             selectedDateTime.set(Calendar.MONTH, selectedMonth);
             selectedDateTime.set(Calendar.DAY_OF_MONTH, selectedDay);
 
-            showTimePickerDialog();
+            showTimePickerDialog(); // After selecting date, let the user select time
 
         }, year, month, day).show();
     }
 
+    // Build the time picker pop-up for the user.
     private void showTimePickerDialog() {
         int hour = selectedDateTime.get(Calendar.HOUR_OF_DAY);
         int minute = selectedDateTime.get(Calendar.MINUTE);
@@ -141,17 +149,20 @@ public class WeatherFragment extends Fragment {
         }, hour, minute, true).show();
     }
 
+    // If not date is provided just load weather date at the current time (in Unix timestamp)
+    // Then initialize the 2 parameter version with the currentTime as the timestamp
     private void loadWeatherData(String city) {
         long currentTime = System.currentTimeMillis() / 1000; // Current time in seconds
         loadWeatherData(city, currentTime);
     }
 
+    // Handle loading weather data at the given city and timestamp
     private void loadWeatherData(String city, long timestamp) {
         String apiKey = "83eb8c7321549e147b8d74d3c9796331";
 
         if (openWeatherMapService == null) {
             Log.e("WeatherError", "OpenWeatherMapService is not initialized.");
-            showErrorToast();
+            Toast.makeText(getContext(), "Failed to load weather data. Correct city name? Max 5days/120 hours from now?", Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -180,19 +191,19 @@ public class WeatherFragment extends Fragment {
                         if (closestForecast != null) {
                             updateUI(closestForecast, city); // Pass both forecast and city to updateUI
                         } else {
-                            showErrorToast();
+                            Toast.makeText(getContext(), "Failed to load weather data. Correct city name? Max 5days/120 hours from now?", Toast.LENGTH_LONG).show();
                         }
                     }
                 } else {
                     Log.e("WeatherError", "Response not successful");
-                    showErrorToast();
+                    Toast.makeText(getContext(), "Failed to load weather data. Correct city name? Max 5days/120 hours from now?", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ForecastData> call, @NonNull Throwable t) {
                 Log.e("WeatherError", "Failure: " + t.getMessage());
-                showErrorToast();
+                Toast.makeText(getContext(), "Failed to load weather data. Correct city name? Max 5days/120 hours from now?", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -200,14 +211,17 @@ public class WeatherFragment extends Fragment {
     @SuppressLint("SetTextI18n")
     private void updateUI(ForecastData.Forecast forecast, ForecastData.City city) {
         if (forecast != null && city != null) {
-
+            // Format the weather data received
             String formattedDate = new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK).format(new java.util.Date(forecast.getDt() * 1000)); // Convert to milliseconds
 
+            // Format the sunrise time received
             String formattedSunrise = new java.text.SimpleDateFormat("HH:mm:ss", Locale.UK).format(new java.util.Date(city.getSunrise() * 1000)); // Convert to milliseconds
 
+            // Format the sunset time received
             String formattedSunset = new java.text.SimpleDateFormat("HH:mm:ss", Locale.UK).format(new java.util.Date(city.getSunset() * 1000)); // Convert to milliseconds
 
-            // Constructing weather information
+            // Constructing weather information with string builder
+            // Making the data appear in readable format
             StringBuilder weatherInfo = new StringBuilder()
                     .append("City: ").append(city.getName()).append(", ").append(city.getCountry())
                     .append("\n" + "Temperature: ").append(String.format(Locale.UK, "%.0f°C", forecast.getMain().temp - 273.15))
@@ -236,10 +250,7 @@ public class WeatherFragment extends Fragment {
         }
     }
 
-    private void showErrorToast() {
-        Toast.makeText(getContext(), "Failed to load weather data. Correct city name? Max 5days/120 hours from now?", Toast.LENGTH_LONG).show();
-    }
-
+    // Handle fetching data for 5 days, every 3 hours as per the API limitations
     private void fetchWeather5Days(String city) {
         long currentTime = System.currentTimeMillis() / 1000; // Get current time in seconds
         long threeHours = 3 * 3600; // 3 hours in seconds

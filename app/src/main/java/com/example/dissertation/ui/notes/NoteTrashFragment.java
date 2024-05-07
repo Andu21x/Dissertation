@@ -33,12 +33,19 @@ public class NoteTrashFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Set up the view and link our .xml file to it
         View view = inflater.inflate(R.layout.fragment_notetrash, container, false);
 
+        // Initialize view by its specific ID
         listViewTrash = view.findViewById(R.id.listViewTrash);
+
+        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
+        dbHelper = new DatabaseHelper(getActivity());
+
+        // Create an array list to hold the ID's
         noteIds = new ArrayList<>();
 
-        dbHelper = new DatabaseHelper(getActivity());
+        // Initialize the adapter, setting this fragment as context
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
         listViewTrash.setAdapter(adapter);
 
@@ -57,6 +64,7 @@ public class NoteTrashFragment extends Fragment {
             return true;
         });
 
+        // Go back to notes when this button is pressed
         view.findViewById(R.id.buttonBackToNotes).setOnClickListener(v -> goToNotes());
 
         dbHelper.cleanUpTrash(); // Clean up old deleted notes
@@ -64,21 +72,24 @@ public class NoteTrashFragment extends Fragment {
         return view;
     }
 
-
+    // Handle loading trash notes
     @SuppressLint("Range")
     private void loadTrashNotes() {
         try (Cursor cursor = dbHelper.readDeletedNotes()){
             noteIds.clear();
             notes.clear();
             while (cursor.moveToNext()) {
+                // Extract needed data from SQL
                 int id = cursor.getInt(cursor.getColumnIndex("noteID"));
                 String title = cursor.getString(cursor.getColumnIndex("title"));
                 String content = cursor.getString(cursor.getColumnIndex("content"));
                 long deletedDate = cursor.getLong(cursor.getColumnIndex("deletedDate"));
 
+                // Format Date according to the standard format
                 SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK);
                 String deletedDateString = sdf.format(new Date(deletedDate * 1000)); // Convert to milliseconds
 
+                // Add the extracted data
                 notes.add(title + "\n" + content + "\n" + "Deleted: " + deletedDateString);
                 noteIds.add(id);
             }
@@ -90,6 +101,7 @@ public class NoteTrashFragment extends Fragment {
         }
     }
 
+    // Handle deletion and visual feedback for the user
     private void deleteFromTrash(int noteId) {
         try {
             dbHelper.deleteNotePermanently(noteId);
@@ -101,6 +113,7 @@ public class NoteTrashFragment extends Fragment {
         }
     }
 
+    // Show an alert dialog to make sure the user intends to delete
     private void confirmPermanentDeletion(int noteId) {
         new AlertDialog.Builder(requireActivity())
                 .setTitle("Permanently Delete Note")
@@ -110,7 +123,7 @@ public class NoteTrashFragment extends Fragment {
                 .show();
     }
 
-
+    // Handle restoring and visual feedback for the user
     private void restoreNote(int noteId) {
         try {
             dbHelper.restoreNote(noteId);
@@ -122,6 +135,7 @@ public class NoteTrashFragment extends Fragment {
         }
     }
 
+    // Show an alert dialog to make sure the user intends to restore
     private void confirmRestoration(int noteId) {
         new AlertDialog.Builder(requireActivity())
                 .setTitle("Restore Note")
@@ -131,6 +145,7 @@ public class NoteTrashFragment extends Fragment {
                 .show();
     }
 
+    // Navigate back to the notes section
     private void goToNotes() {
         NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment_content_main);
         navController.navigate(R.id.nav_notes);

@@ -1,3 +1,5 @@
+// Heavily inspired by https://weeklycoding.com/mpandroidchart-documentation/
+
 package com.example.dissertation.ui.chart;
 
 import android.annotation.SuppressLint;
@@ -27,38 +29,55 @@ public class PositiveBudgetsLoader implements ChartLoader {
     @SuppressLint("Range")
     @Override
     public void loadChartData(BarChart chart, long startDate, long endDate, DatabaseHelper dbHelper) {
+        // Query to select budgets between specified dates and order them by date
         @SuppressLint("DefaultLocale")
         String query = String.format("SELECT budgetDate, total FROM budgetTable " +
                 "WHERE total > 0 AND budgetDate BETWEEN %d AND %d ORDER BY budgetDate ASC", startDate, endDate);
 
         try (Cursor cursor = dbHelper.readChart(query)) {
+
+            // Use TreeMap to ensure that the dates are sorted in ascending order automatically
             Map<String, Float> dateTotalMap = new TreeMap<>();
+
+            // SimpleDateFormat to format dates from the database into a standard format later
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.UK);
 
             // Iterate through cursor and extract relevant data
             while (cursor.moveToNext()) {
+                // Gather all the data we need from the SQL
                 long budgetDate = cursor.getLong(cursor.getColumnIndex("budgetDate"));
                 float total = cursor.getFloat(cursor.getColumnIndex("total"));
+
+                // Format budgetDate
                 String date = dateFormat.format(new Date(budgetDate));
 
+                // Use getOrDefault() to put the total if there is no total assigned to that date
                 dateTotalMap.put(date, dateTotalMap.getOrDefault(date, 0f) + total);
             }
 
+            // List to hold the bar entries
             List<BarEntry> entries = new ArrayList<>();
+
+            // List to hold the dates as strings
             List<String> dates = new ArrayList<>();
+
+            // Index to iterate through for loop
             int index = 0;
 
-            // Create entries for chart
+            // Create entries for chart, iterate over each entry in the map
             for (Map.Entry<String, Float> entry : dateTotalMap.entrySet()) {
                 String date = entry.getKey();
                 float total = entry.getValue();
 
+                // Create a new BarEntry for the chart using the current index as the x-value and total as the y-value
                 entries.add(new BarEntry(index, total));
                 dates.add(date);
+
+                // Increment index to move to the next total
                 index++;
             }
 
-            // Create dataset
+            // Create dataset and set colour green
             BarDataSet dataSet = new BarDataSet(entries, "Positive Budgets");
             dataSet.setValueTextColor(Color.GREEN);
             dataSet.setColor(Color.GREEN);
@@ -73,7 +92,7 @@ public class PositiveBudgetsLoader implements ChartLoader {
             xAxis.setGranularity(1f);
             xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
-            // Refresh chart
+            // Invalidate the chart to refresh its content
             chart.invalidate();
         } catch (Exception e) {
             Log.e("ChartError", "Error loading positive budgets: " + e.getMessage());

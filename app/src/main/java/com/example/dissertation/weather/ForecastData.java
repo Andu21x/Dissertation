@@ -1,3 +1,6 @@
+// Model class for handling the JSON file received from the API
+// Followed this documentation closely: https://openweathermap.org/forecast5
+
 package com.example.dissertation.weather;
 
 import com.google.gson.annotations.SerializedName;

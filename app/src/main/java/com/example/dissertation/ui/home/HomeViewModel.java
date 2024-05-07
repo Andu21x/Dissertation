@@ -1,3 +1,5 @@
+// Untouched for the most part, came with the default framework of the IDE
+
 package com.example.dissertation.ui.home;
 
 import androidx.lifecycle.LiveData;

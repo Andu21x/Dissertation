@@ -1,3 +1,5 @@
+// Heavily inspired by https://weeklycoding.com/mpandroidchart-documentation/
+
 package com.example.dissertation.ui.chart;
 
 import android.annotation.SuppressLint;
@@ -27,24 +29,34 @@ public class NetProfitOrLossLoader implements ChartLoader {
     @SuppressLint("Range")
     @Override
     public void loadChartData(BarChart chart, long startDate, long endDate, DatabaseHelper dbHelper) {
+        // Query to select budgets between specified dates and order them by date
         @SuppressLint("DefaultLocale")
         String query = String.format("SELECT budgetDate, total FROM budgetTable " +
                 "WHERE budgetDate BETWEEN %d AND %d ORDER BY budgetDate ASC", startDate, endDate);
 
         try (Cursor cursor = dbHelper.readChart(query)) {
+            // Use TreeMap to ensure that the dates are sorted in ascending order automatically
+            // Each date string will be mapped to an array of floats (totals)
             Map<String, float[]> dateTotalsMap = new TreeMap<>();
+
+            // SimpleDateFormat to format dates from the database into a standard format later
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.UK);
 
-            // Aggregate data by date
+            // Iterate through cursor and extract relevant data
             while (cursor.moveToNext()) {
+                // Gather all the data we need from the SQL
                 long budgetDate = cursor.getLong(cursor.getColumnIndex("budgetDate"));
                 float total = cursor.getFloat(cursor.getColumnIndex("total"));
+
+                // Format budgetDate
                 String date = dateFormat.format(new Date(budgetDate));
 
+                // If the date does not already exist in the map, initialize it with zero totals
                 if (!dateTotalsMap.containsKey(date)) {
                     dateTotalsMap.put(date, new float[]{0, 0});
                 }
 
+                // Accumulate positive and negative totals separately
                 if (total >= 0) {
                     dateTotalsMap.get(date)[0] += total;
                 } else {
@@ -52,27 +64,37 @@ public class NetProfitOrLossLoader implements ChartLoader {
                 }
             }
 
+            // List to hold all revenue entries
             List<BarEntry> entries = new ArrayList<>();
+
+            // List to hold the formatted date labels for the x-axis
             List<String> dates = new ArrayList<>();
+
+            // Index to iterate through for loop
             int index = 0;
 
-            // Create entries for chart
+            // Create entries for chart, iterate over each entry in the map
             for (Map.Entry<String, float[]> entry : dateTotalsMap.entrySet()) {
                 String date = entry.getKey();
                 float[] totals = entry.getValue();
 
+                // Sum the totals to get either a positive or a negative
                 float netProfitOrLoss = totals[0] + totals[1];
+
+                // Create a new BarEntry for the chart using the current index as the x-value and total as the y-value
                 entries.add(new BarEntry(index, netProfitOrLoss));
                 dates.add(date);
+
+                // Increment index to move to the next total
                 index++;
             }
 
-            // Create dataset
+            // Create dataset and set its colour
             BarDataSet dataSet = new BarDataSet(entries, "Net Profit or Loss");
             dataSet.setValueTextColor(Color.BLACK);
             dataSet.setColors(new ArrayList<>());
 
-            // Set colors based on profit or loss
+            // Iterate through every entry and set colors based on profit or loss
             for (BarEntry entry : entries) {
                 float net = entry.getY();
                 int color = net >= 0 ? Color.GREEN : Color.RED;
@@ -89,7 +111,7 @@ public class NetProfitOrLossLoader implements ChartLoader {
             xAxis.setGranularity(1f);
             xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
-            // Refresh chart
+            // Invalidate the chart to refresh its content
             chart.invalidate();
         } catch (Exception e) {
             Log.e("ChartError", "Error loading net profit or loss data: " + e.getMessage());

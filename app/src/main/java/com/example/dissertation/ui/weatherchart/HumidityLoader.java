@@ -1,3 +1,5 @@
+// Heavily inspired by https://weeklycoding.com/mpandroidchart-documentation/
+
 package com.example.dissertation.ui.weatherchart;
 
 import android.annotation.SuppressLint;
@@ -27,19 +29,31 @@ public class HumidityLoader implements WeatherChartLoader {
     @SuppressLint("Range")
     @Override
     public void loadChartData(LineChart chart, long startDate, long endDate, String cityName, DatabaseHelper dbHelper) {
+        // Query to select previous weather data between specified dates and order them by date
         @SuppressLint("DefaultLocale")
         String query = String.format("SELECT dateTime, humidity FROM prevWeatherDataTable " +
                 "WHERE dateTime BETWEEN %d AND %d AND cityName = ? ORDER BY dateTime ASC", startDate, endDate);
 
         try (Cursor cursor = dbHelper.getReadableDatabase().rawQuery(query, new String[]{cityName})) {
+
+            // Create a list for entries
             List<Entry> entries = new ArrayList<>();
+
+            // Create a list for string dates
             List<String> dates = new ArrayList<>();
+
+            // Create a set for long unique dates
             Set<Long> uniqueDates = new HashSet<>();
+
+            // SimpleDateFormat to format dates from the database into a standard format later
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.UK);
+
+            // Index to iterate through for loop
             int index = 0;
 
             // Iterate through cursor and extract relevant data
             while (cursor.moveToNext()) {
+                // Gather all the data we need from the SQL
                 long dateTime = cursor.getLong(cursor.getColumnIndex("dateTime"));
                 int humidity = cursor.getInt(cursor.getColumnIndex("humidity"));
 
@@ -55,13 +69,15 @@ public class HumidityLoader implements WeatherChartLoader {
                 // Convert Unix timestamp to milliseconds
                 Date date = new Date(dateTime * 1000L);
 
-                // Prepare data for chart
+                // Create a new Entry for the chart using the current index as the x-value and humidity as the y-value
                 entries.add(new Entry(index, humidity));
                 dates.add(dateFormat.format(date));
+
+                // Increment index to move to the next total
                 index++;
             }
 
-            // Create dataset
+            // Create dataset and set custom styling
             LineDataSet dataSet = new LineDataSet(entries, "Humidity");
             dataSet.setValueTextColor(Color.BLUE);
             dataSet.setValueTextSize(10);
@@ -86,7 +102,7 @@ public class HumidityLoader implements WeatherChartLoader {
             xAxis.setLabelRotationAngle(-90);
             xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
-            // Refresh chart
+            // Invalidate the chart to refresh its content
             chart.invalidate();
         } catch (Exception e) {
             Toast.makeText(chart.getContext(), "Error loading weather data: " + e.getMessage(), Toast.LENGTH_LONG).show();

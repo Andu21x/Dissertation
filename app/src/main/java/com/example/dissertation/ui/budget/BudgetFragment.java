@@ -1,3 +1,5 @@
+// Heavily inspired by https://developer.android.com/develop/ui/views/layout/declaring-layout?authuser=2#java
+
 package com.example.dissertation.ui.budget;
 
 import android.annotation.SuppressLint;
@@ -43,8 +45,10 @@ public class BudgetFragment extends Fragment {
     @SuppressLint("Range")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // Set up the view and link our .xml file to it
         View view = inflater.inflate(R.layout.fragment_budget, container, false);
 
+        // Initialize views by their specific IDs
         textViewAggregateTotal = view.findViewById(R.id.textViewAggregateTotal);
         spinnerType = view.findViewById(R.id.spinnerBudgetType);
         editTextType = view.findViewById(R.id.editTextBudgetType);
@@ -55,29 +59,39 @@ public class BudgetFragment extends Fragment {
         ListView listViewBudgets = view.findViewById(R.id.listViewBudgets);
         Button buttonSave = view.findViewById(R.id.buttonSaveBudget);
 
+        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
         dbHelper = new DatabaseHelper(getActivity());
+
+        // Create an array list to hold the ID's
         budgetIds = new ArrayList<>();
+
+        // Initialize the adapter, setting this fragment as context
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, new ArrayList<>());
         listViewBudgets.setAdapter(adapter);
 
-        calendar = Calendar.getInstance();
+        calendar = Calendar.getInstance(); // Get the current timezone and locale
 
         updateLabel(); // Set current date as default in editTextBudgetDate
 
         loadBudgets(); // Load data early to ensure UI is populated before any user interaction
 
+        // Set on click listener to save budget data when pressed
         buttonSave.setOnClickListener(v -> saveBudget());
 
+        // Set on long click listener to double check the user wants to delete
         listViewBudgets.setOnItemLongClickListener((parent, view12, position, id) -> {
             confirmDeletion(budgetIds.get(position)); // Retrieve the ID of the budget to delete
             return true;
         });
 
+        // Set on click listener to show the update dialog menu when a budget is pressed
         listViewBudgets.setOnItemClickListener((parent, view1, position, id) -> {
-            int budgetId = budgetIds.get(position);
+            int budgetId = budgetIds.get(position); // Retrieve the ID of the budget to update
 
+            // Try to find an entry at that position
             try (Cursor cursor = dbHelper.readBudgetById(budgetId)) {
                 if (cursor.moveToFirst()) {
+                    // Gather all the data we need from the SQL
                     String type = cursor.getString(cursor.getColumnIndex("type"));
                     String description = cursor.getString(cursor.getColumnIndex("description"));
                     int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
@@ -90,6 +104,7 @@ public class BudgetFragment extends Fragment {
             }
         });
 
+        // Set the date to the date picked by the user
         editTextBudgetDate.setOnClickListener(v -> new DatePickerDialog(getContext(), date,
                 calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)).show());
@@ -100,6 +115,7 @@ public class BudgetFragment extends Fragment {
         return view;
     }
 
+    // Handle saving all entries inputted by the user
     private void saveBudget() {
         // Make all fields into strings
         String type = spinnerType.getSelectedItem().toString();
@@ -144,17 +160,19 @@ public class BudgetFragment extends Fragment {
         }
     }
 
+    // Handle loading budgets
     @SuppressLint({"Range", "SetTextI18n"})
     private void loadBudgets() {
         try (Cursor cursor = dbHelper.readBudget()) {
-
+            // Create an array list to hold the budget strings
             ArrayList<String> listBudgets = new ArrayList<>();
 
-            budgetIds.clear();
+            budgetIds.clear(); // Ensure page is clear before loading
 
-            double totalSum = 0;
+            double totalSum = 0; // Create variable to hold the total
 
             while (cursor.moveToNext()) {
+                // Extract needed data from SQL
                 int id = cursor.getInt(cursor.getColumnIndex("budgetID"));
                 int quantity = cursor.getInt(cursor.getColumnIndex("quantity"));
                 double sellingPrice = cursor.getDouble(cursor.getColumnIndex("sellingPrice"));
@@ -162,6 +180,7 @@ public class BudgetFragment extends Fragment {
                 String type = cursor.getString(cursor.getColumnIndex("type"));
                 String description = cursor.getString(cursor.getColumnIndex("description"));
 
+                // Build the string with the extracted data
                 String budget = "Type: " + type +
                         ", Desc: " + description +
                         ", Qty: " + quantity +
@@ -183,6 +202,7 @@ public class BudgetFragment extends Fragment {
         }
     }
 
+    // Handle deletion and visual feedback for the user
     private void deleteBudget(int budgetId) {
         try {
             dbHelper.deleteBudget(budgetId);
@@ -194,6 +214,7 @@ public class BudgetFragment extends Fragment {
         }
     }
 
+    // Show an alert dialog to make sure the user intends to delete
     private void confirmDeletion(int budgetId) {
         new AlertDialog.Builder(requireActivity())
                 .setTitle("Delete Budget")
@@ -203,6 +224,7 @@ public class BudgetFragment extends Fragment {
                 .show();
     }
 
+    // Handle the construction and interaction of the update dialog pop up
     private void showUpdateDialog(int budgetId, String currentType, String currentDescription, int currentQuantity, double currentSellingPrice) {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
 
@@ -239,6 +261,7 @@ public class BudgetFragment extends Fragment {
         // Set up the buttons
         builder.setPositiveButton("Update", (dialog, which) -> {
             try {
+                // Gather and translate data to be sent for update
                 String type = editTextType.getText().toString();
                 String description = editTextDescription.getText().toString();
                 int quantity = Integer.parseInt(editTextQuantity.getText().toString());
@@ -248,7 +271,7 @@ public class BudgetFragment extends Fragment {
                 Date date = sdf.parse(editTextBudgetDate.getText().toString());
                 long dateMillis = date.getTime() / 1000;
 
-                // Do the same we did above, but on update
+                // When it's an expense, transform it into a negative number
                 if ("Expense".equals(type)) {
                     sellingPrice = -sellingPrice;
                 }
@@ -262,9 +285,11 @@ public class BudgetFragment extends Fragment {
         });
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
 
+        // Display the built dialog
         builder.show();
     }
 
+    // Handle updating and visual feedback for the user
     private void updateBudget(int budgetId, String type, String description, int quantity, double sellingPrice, long dateMillis) {
         double total = quantity * sellingPrice; // Calculating total
 
@@ -289,6 +314,8 @@ public class BudgetFragment extends Fragment {
         }
     };
 
+    // Updates the editTextBudgetDate with the date selected from the DatePickerDialog
+    // formatted as dd/MM/yyyy. This method is called after the user sets a date.
     private void updateLabel() {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.UK);
         editTextBudgetDate.setText(sdf.format(calendar.getTime()));
