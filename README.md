@@ -7,4 +7,6 @@ When filtering budget dates remember to set a day back and a day forward from yo
 The weather alarm will be sent 5 seconds and then every 3 seconds for every subsequent time where probability of 
 precipitation is high
 
+The submitted branch is the "finished" one
+
 The Folder Structure is the default. Unzip the file and open the "Dissertation" in your android studio directly
