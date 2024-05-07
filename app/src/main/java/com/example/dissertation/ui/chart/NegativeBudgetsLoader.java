@@ -52,8 +52,7 @@ public class NegativeBudgetsLoader implements ChartLoader {
                 // Format budgetDate
                 String date = dateFormat.format(new Date(budgetDate));
 
-                // Use getOrDefault() to put the total if there is no total assigned to that date
-                dateTotalsMap.put(date, dateTotalsMap.getOrDefault(date, 0f) + total);
+                dateTotalsMap.merge(date, total, Float::sum);
             }
 
             // List to hold the bar entries

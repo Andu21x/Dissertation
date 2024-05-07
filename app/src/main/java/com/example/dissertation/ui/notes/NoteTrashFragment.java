@@ -39,11 +39,11 @@ public class NoteTrashFragment extends Fragment {
         // Initialize view by its specific ID
         listViewTrash = view.findViewById(R.id.listViewTrash);
 
-        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
-        dbHelper = new DatabaseHelper(getActivity());
-
         // Create an array list to hold the ID's
         noteIds = new ArrayList<>();
+
+        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
+        dbHelper = new DatabaseHelper(getActivity());
 
         // Initialize the adapter, setting this fragment as context
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, notes);
@@ -93,8 +93,6 @@ public class NoteTrashFragment extends Fragment {
                 notes.add(title + "\n" + content + "\n" + "Deleted: " + deletedDateString);
                 noteIds.add(id);
             }
-            adapter.clear();
-            adapter.addAll(notes);
             adapter.notifyDataSetChanged();
         } catch (Exception e) {
             Toast.makeText(getActivity(), "Error loading deleted notes: " + e.getMessage(), Toast.LENGTH_LONG).show();

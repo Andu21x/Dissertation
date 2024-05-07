@@ -12,7 +12,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "myDatabase.db";
-    private static final int DATABASE_VERSION = 30;
+    private static final int DATABASE_VERSION = 31;
 
     // Creating the tables by having Strings contain the SQL statement necessary
     private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable " +
@@ -50,7 +50,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     // This part is from the Reintech tutorial
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 30) {
+        if (oldVersion < 31) {
             // Drop all these tables if the version is less than the database version
             db.execSQL("DROP TABLE IF EXISTS noteTable");
             db.execSQL("DROP TABLE IF EXISTS budgetTable");

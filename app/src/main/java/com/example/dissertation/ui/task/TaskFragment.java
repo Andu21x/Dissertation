@@ -82,7 +82,7 @@ public class TaskFragment extends Fragment {
             try (Cursor cursor = dbHelper.readTask(selectedDate, selectedDate + DAY_IN_MILLIS - 1)) {
                 if (cursor != null && cursor.moveToPosition(position)) {
                     // Extract needed data from SQL
-                    int taskId = cursor.getInt(cursor.getColumnIndex("taskID"));
+                    int taskID = cursor.getInt(cursor.getColumnIndex("taskID"));
                     String title = cursor.getString(cursor.getColumnIndex("title"));
                     String description = cursor.getString(cursor.getColumnIndex("description"));
                     String type = cursor.getString(cursor.getColumnIndex("type"));
@@ -91,7 +91,7 @@ public class TaskFragment extends Fragment {
                     int priority = cursor.getInt(cursor.getColumnIndex("priority"));
                     int isCompleted = cursor.getInt(cursor.getColumnIndex("isCompleted"));
 
-                    showEditTaskDialog(taskId, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+                    showEditTaskDialog(taskID, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
                 }
             } catch (Exception e) {
                 Toast.makeText(getActivity(), "Error loading task: " + e.getMessage(), Toast.LENGTH_LONG).show();
@@ -177,7 +177,7 @@ public class TaskFragment extends Fragment {
 
     // Handle the construction and interaction of the edit dialog pop up
     @SuppressLint("SetTextI18n")
-    private void showEditTaskDialog(int taskId, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
+    private void showEditTaskDialog(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("Edit Task");
 
@@ -229,14 +229,14 @@ public class TaskFragment extends Fragment {
         builder.setView(layout); // Set the view to AlertDialog
 
         // Setup dialog buttons
-        builder.setPositiveButton("Update", (dialog, which) -> updateTask(taskId, inputTitle.getText().toString(), inputDescription.getText().toString(),
+        builder.setPositiveButton("Update", (dialog, which) -> updateTask(taskID, inputTitle.getText().toString(), inputDescription.getText().toString(),
                 typeSpinner.getSelectedItem().toString(), selectedDate,
                 parseTime(inputStartTime.getText().toString()), parseTime(inputEndTime.getText().toString()),
                 Integer.parseInt(inputPriority.getText().toString()), Integer.parseInt(inputCompleted.getText().toString())));
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
 
-        builder.setNeutralButton("Delete", (dialog, which) -> confirmDeletion(taskId));
+        builder.setNeutralButton("Delete", (dialog, which) -> confirmDeletion(taskID));
 
         // Display the built dialog
         builder.show();
@@ -331,12 +331,12 @@ public class TaskFragment extends Fragment {
     }
 
     // Handle updating and visual feedback for the user
-    private void updateTask(int taskId, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
+    private void updateTask(int taskID, String title, String description, String type, long selectedDate, long startTime, long endTime, int priority, int isCompleted) {
         if (title.isEmpty() || description.isEmpty() || type.isEmpty()) {
             Toast.makeText(getContext(), "All fields are required", Toast.LENGTH_SHORT).show();
             return;
         }
-        dbHelper.updateTask(taskId, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
+        dbHelper.updateTask(taskID, title, description, type, selectedDate, startTime, endTime, priority, isCompleted);
         Toast.makeText(getContext(), "Task updated", Toast.LENGTH_SHORT).show();
         loadTasks(selectedDate);
     }

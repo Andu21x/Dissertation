@@ -32,6 +32,7 @@ import java.util.Locale;
 public class NotesFragment extends Fragment {
 
     private EditText editTextTitle, editTextContent;
+    private ListView listViewNotes;
     private ArrayAdapter<String> adapter;
     private DatabaseHelper dbHelper;
     private ArrayList<Integer> noteIds;
@@ -45,15 +46,15 @@ public class NotesFragment extends Fragment {
         // Initialize views by their specific IDs
         editTextTitle = view.findViewById(R.id.editTextTitle);
         editTextContent = view.findViewById(R.id.editTextContent);
-        ListView listViewNotes = view.findViewById(R.id.listViewNotes);
+        listViewNotes = view.findViewById(R.id.listViewNotes);
         Button buttonSave = view.findViewById(R.id.buttonSave);
         Button buttonTrash = view.findViewById(R.id.buttonTrash);
 
-        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
-        dbHelper = new DatabaseHelper(getActivity());
-
         // Create an array list to hold the ID's
         noteIds = new ArrayList<>();
+
+        // Initialize the DatabaseHelper to facilitate database operations (CRUD)
+        dbHelper = new DatabaseHelper(getActivity());
 
         // Initialize the adapter, setting this fragment as context
         adapter = new ArrayAdapter<>(requireActivity(), android.R.layout.simple_list_item_1, new ArrayList<>());
