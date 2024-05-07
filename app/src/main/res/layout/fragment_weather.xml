@@ -35,7 +35,7 @@
         android:id="@+id/checkbox_weather_alert"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/alert_me_if_precipitation_is_over_50"
+        android:text="@string/alert_me_of_high_precipitation_70"
         android:textSize="17sp"
         android:textColor="@color/black"
         android:shadowColor="@color/black"
@@ -50,5 +50,5 @@
         android:textColor="@color/black"
         android:shadowColor="@color/black"
         android:textColorHint="@color/black"
-        android:textSize="19sp" />
+        android:textSize="18sp" />
 </LinearLayout>

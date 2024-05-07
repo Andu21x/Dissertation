@@ -1,3 +1,6 @@
+// Majority of this class taken from https://reintech.io/blog/developing-database-driven-android-app-sqlite
+// Including the string sql statements, onCreate, onUpgrade, CRUD methods (customized for my implementations)
+
 package com.example.dissertation;
 
 import android.content.ContentValues;
@@ -9,9 +12,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "myDatabase.db";
-    private static final int DATABASE_VERSION = 26;
+    private static final int DATABASE_VERSION = 30;
 
-    // Creating the tables
+    // Creating the tables by having Strings contain the SQL statement necessary
     private static final String CREATE_NOTES_TABLE = "CREATE TABLE noteTable " +
             "(noteID INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, content TEXT, creationDate INTEGER, editDate INTEGER, deletedDate INTEGER)";
 
@@ -27,13 +30,16 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String CREATE_PREV_WEATHER_DATA_TABLE = "CREATE TABLE prevWeatherDataTable " +
             "(prevWeatherID INTEGER PRIMARY KEY AUTOINCREMENT, cityName TEXT, country TEXT, dateTime INTEGER, temperature REAL, feels_like REAL, weather_description TEXT, clouds INTEGER, humidity INTEGER, " +
             "pop REAL, wind_speed REAL, wind_deg INTEGER, wind_gust REAL, pressure INTEGER, visibility INTEGER, timezone INTEGER, sunrise INTEGER, sunset INTEGER, min_temp REAL, max_temp REAL, rain_mm REAL)";
+
+    // This method is from the Reintech tutorial
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    // This method is from the Reintech tutorial
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Create your tables here
+        // Create tables here
         db.execSQL(CREATE_NOTES_TABLE);
         db.execSQL(CREATE_BUDGET_TABLE);
         db.execSQL(CREATE_TASK_TABLE);
@@ -41,9 +47,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_PREV_WEATHER_DATA_TABLE);
     }
 
+    // This part is from the Reintech tutorial
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (oldVersion < 26) {
+        if (oldVersion < 30) {
+            // Drop all these tables if the version is less than the database version
             db.execSQL("DROP TABLE IF EXISTS noteTable");
             db.execSQL("DROP TABLE IF EXISTS budgetTable");
             db.execSQL("DROP TABLE IF EXISTS taskTable");
@@ -52,7 +60,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             onCreate(db);
         }
     }
-
 
     // Insert data methods for all tables and their respective values
     public void insertNote(String title, String content) {
@@ -134,27 +141,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.insert("prevWeatherDataTable", null, values);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Read data methods
     public Cursor readNote() {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -226,22 +212,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.rawQuery(query, selectionArgs);
     }
 
-    public Cursor getHighPopForecasts(long startTime, long endTime) {
+    // Only gather the entries with a probability of precipitation over 70%
+    public Cursor getHighPopForecasts(String city, long startTime, long endTime) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM prevWeatherDataTable WHERE dateTime BETWEEN ? AND ? AND pop > 50", new String[]{String.valueOf(startTime), String.valueOf(endTime)});
+        startTime /= 1000; // Make sure to convert to seconds
+        endTime /= 1000; // Same here
+
+        return db.rawQuery("SELECT * FROM prevWeatherDataTable WHERE cityName = ? AND dateTime BETWEEN ? AND ? AND pop >= 70",
+                new String[]{city, String.valueOf(startTime), String.valueOf(endTime)});
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
     // Update data methods
     public void updateNote(int id, String title, String content) {
@@ -293,25 +272,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.update("inventoryTable", values, "itemID=?", new String[]{String.valueOf(itemID)});
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     // Delete data methods
     public void deleteNote(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -333,6 +293,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.update("noteTable", values, "noteID=?", new String[]{String.valueOf(id)});
     }
 
+    // Automatically delete all notes that are older than 30 days from now
     public void cleanUpTrash() {
         SQLiteDatabase db = this.getWritableDatabase();
         long currentTime = System.currentTimeMillis() / 1000; // Current time in seconds

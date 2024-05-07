@@ -1,3 +1,7 @@
+// Inspired by https://developer.android.com/develop/ui/views/notifications/time-sensitive
+// and https://developer.android.com/reference/android/app/AlarmManager
+// and https://developer.android.com/reference/android/app/NotificationManager
+
 package com.example.dissertation.notifications;
 
 import android.annotation.SuppressLint;
@@ -20,10 +24,9 @@ import com.example.dissertation.DatabaseHelper;
 import java.util.Locale;
 
 public class NotificationHelper {
-    private static final String TAG = "NotificationHelper";
+    private static final String TAG = "NotificationHelper"; // Tag used for easier identification of logs
     private static final String CHANNEL_ID = "task_channel";
     private static final String PREFS_NAME = "NotificationPrefs";
-    private static final String NOTIFICATION_ID_KEY = "notification_id";
 
     private final Context mContext;
     private final NotificationManager notificationManager;
@@ -37,16 +40,21 @@ public class NotificationHelper {
         this.alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         this.sharedPreferences = mContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         this.dbHelper = new DatabaseHelper(context); // Initialize dbHelper
-        createNotificationChannel();
+        initializeNotificationChannel();
     }
 
+    // Stop creating notification channels if we already initialized them before
     @SuppressLint("ObsoleteSdkInt")
-    private void createNotificationChannel() {
+    private void initializeNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Task Notifications", NotificationManager.IMPORTANCE_HIGH);
-            channel.setDescription("Notifications for task updates");
-            notificationManager.createNotificationChannel(channel);
-            Log.d(TAG, "Notification channel created");
+            if (notificationManager.getNotificationChannel(CHANNEL_ID) == null) {
+                NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "Task Notifications", NotificationManager.IMPORTANCE_HIGH);
+                channel.setDescription("Notifications for task updates");
+                notificationManager.createNotificationChannel(channel);
+                Log.d(TAG, "Notification channel created");
+            } else {
+                Log.d(TAG, "Notification channel already exists");
+            }
         }
     }
 
@@ -54,12 +62,9 @@ public class NotificationHelper {
     public void scheduleNotification(long triggerAtMillis, String title, String content, String type) {
         // Use a unique request code for each notification to prevent duplicates
         int requestCode = generateRequestCode(title, triggerAtMillis);
-        if (!checkAndStoreNotification(title, triggerAtMillis)) {
-            Log.d(TAG, "Notification is a duplicate and will not be scheduled.");
-            return;
-        }
         Log.d(TAG, "Scheduling notification with request code: " + requestCode);
 
+        // Set up the intent and put in all the extra needed parameters
         Intent intent = new Intent(mContext, AlertReceiver.class);
         intent.setAction("com.example.dissertation.ALARM_ACTION");
         intent.putExtra("notification_id", requestCode);
@@ -68,9 +73,13 @@ public class NotificationHelper {
         intent.putExtra("type", type);
 
 
+        // Flagged as an urgent message
         PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, requestCode, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ? PendingIntent.FLAG_IMMUTABLE : 0));
 
+        // Accommodate for different versions of android within the try block
+        // Find the right type of alarm to be set, preferably we would like to go top down
+        // setExactAndAllowWhileIdle is the best but requires security handling and permissions
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 if (alarmManager.canScheduleExactAlarms()) {
@@ -87,6 +96,7 @@ public class NotificationHelper {
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
             } else {
+                // For a very old version of android just try the most basic alarm setter
                 alarmManager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent);
             }
             Log.d(TAG, "Alarm set with request code " + requestCode + " at " + triggerAtMillis);
@@ -96,29 +106,34 @@ public class NotificationHelper {
     }
 
     @SuppressLint("Range")
-    public void scheduleWeatherNotifications() {
-        long currentTime = System.currentTimeMillis() / 1000; // Current Unix time in seconds
-        long endTime = currentTime + (10 * 24 * 3600); // 10 days ahead from current time
+    public void scheduleWeatherNotifications(String city) {
+        long currentTime = System.currentTimeMillis();
+        long endTime = currentTime + (5 * 24 * 3600 * 1000); // 5 days ahead from current time
+        Log.d(TAG, "Before the try block");
 
         // Query forecasts with high precipitation probability
-        try (Cursor cursor = dbHelper.getHighPopForecasts(currentTime, endTime)) {
-            if (cursor != null && cursor.moveToFirst()) {
-                do {
+        try (Cursor cursor = dbHelper.getHighPopForecasts(city, currentTime, endTime)) {
+            if (cursor != null) {
+                int delayIncrement = 0; // Introduce a manual delay to prevent alarm spamming
+                Log.d("DatabaseHelper", "Number of entries fetched: " + cursor.getCount());
+
+                if (cursor.moveToFirst()) {
+                    do {
                     long dateTime = cursor.getLong(cursor.getColumnIndex("dateTime"));
-                    double pop = cursor.getDouble(cursor.getColumnIndex("pop")); // Probability of precipitation
                     String description = cursor.getString(cursor.getColumnIndex("weather_description"));
 
-                    if (dateTime > currentTime && pop > 50) {
-                        long notificationTime = dateTime - (24 * 3600); // Schedule 24 hours before the event
-                        String title = "Weather Alert!";
-                        String content = String.format(Locale.UK, "High chance of rain on %s. Details: %s",
-                                new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK).format(new java.util.Date(dateTime * 1000)),
-                                description);
+                    String title = "Weather Alert!";
+                    String content = String.format(Locale.UK, "High chance of rain on %s. Details: %s",
+                            new java.text.SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.UK).format(new java.util.Date(dateTime * 1000)),
+                            description);
 
-                        // Schedule the notification
-                        scheduleNotification(notificationTime * 1000, title, content, "weather"); // Pass "weather" as the type
-                    }
-                } while (cursor.moveToNext());
+                    // Schedule the notification, making sure to convert the notificationTime to milliseconds, as "triggerAtMillis" requires milliseconds
+                    scheduleNotification(System.currentTimeMillis() + 5000 + (1500L * delayIncrement), title, content, "weather"); // Pass "weather" as the type
+                    Log.d(TAG, "Schedule notification at: " + System.currentTimeMillis() + 5000 + (1500L * delayIncrement) +  " with title: " + title + " and content: " + content);
+
+                    delayIncrement++; // Increase the delay increment for the next notification
+                    } while (cursor.moveToNext());
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Error scheduling weather notifications", e);
@@ -127,6 +142,9 @@ public class NotificationHelper {
 
     public void sendTaskNotification(int notificationId, String title, String content) {
         Log.d(TAG, "sendTaskNotification ID at the top: " + notificationId);
+
+        // Customize notification details specific to task
+        // Heavily inspired by the android documentation
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, CHANNEL_ID)
                 .setSmallIcon(R.drawable.notification_icon)
                 .setContentTitle(title)
@@ -134,12 +152,16 @@ public class NotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
 
+        // Use the notification manager to post the notification
         notificationManager.notify(notificationId, builder.build());
         Log.d(TAG, "Notification sent through the builder: " + title + " with ID " + notificationId);
     }
 
     public void sendWeatherNotification(int notificationId, String title, String content) {
+        Log.d(TAG, "sendWeatherNotification ID at the top: " + notificationId);
+
         // Customize notification details specific to weather
+        // Heavily inspired by the android documentation
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, CHANNEL_ID)
                 .setSmallIcon(R.drawable.weather_icon)
                 .setContentTitle(title)
@@ -147,31 +169,13 @@ public class NotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true);
 
+        // Use the notification manager to post the notification
         notificationManager.notify(notificationId, builder.build());
         Log.d(TAG, "Weather notification sent: " + title);
     }
 
     // Method to generate a unique request code
-    public int generateRequestCode(String city, long dateTime) {
-        String uniqueString = city + dateTime;
-        return uniqueString.hashCode();
+    public int generateRequestCode(String identifier, long dateTime) {
+        return (identifier + dateTime).hashCode();
     }
-
-    // Method to check for existing notifications and decide whether to schedule a new one
-    public boolean checkAndStoreNotification(String city, long dateTime) {
-        SharedPreferences prefs = mContext.getSharedPreferences("WeatherPrefs", Context.MODE_PRIVATE);
-        String lastNotificationKey = city + "_lastNotification";
-        long lastNotificationTime = prefs.getLong(lastNotificationKey, 0);
-        long oneDayMillis = 24 * 3600 * 1000; // 24 hours in milliseconds
-
-        if (dateTime > lastNotificationTime + oneDayMillis) {
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putLong(lastNotificationKey, dateTime);
-            editor.apply();
-            return true; // Proceed with scheduling
-        }
-        return false; // Skip as it's a duplicate
-    }
-
-
 }

@@ -48,6 +48,7 @@
     <string name="enter_city_name2">Enter City Name</string>
     <string name="start_date2">Start Date</string>
     <string name="end_date2">End Date</string>
+    <string name="alert_me_of_high_precipitation_70"><![CDATA[Alert me of high precipitation (>= 70)]]></string>
     <string-array name="chart_types">
         <item>Total Revenues</item>
         <item>Positive budgets</item>

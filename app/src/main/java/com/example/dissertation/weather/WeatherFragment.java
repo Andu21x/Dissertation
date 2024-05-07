@@ -97,7 +97,8 @@ public class WeatherFragment extends Fragment {
             if (!city.isEmpty()) {
                 fetchWeather5Days(city); // Call the method to fetch weather 5 days in advance
                 if (weatherAlertCheckBox.isChecked()) {
-                    scheduleWeatherNotifications(); // Schedule notifications if the checkbox is checked
+                    NotificationHelper notificationHelper = new NotificationHelper(getContext());
+                    notificationHelper.scheduleWeatherNotifications(city); // Schedule notifications if the checkbox is checked
                 }
             } else {
                 Toast.makeText(getContext(), "Please enter a city name", Toast.LENGTH_SHORT).show();
@@ -248,11 +249,6 @@ public class WeatherFragment extends Fragment {
         for (long time = currentTime; time <= currentTime + 5 * 24 * 3600; time += threeHours) {
             loadWeatherData(city, time); // Use the two-parameter version
         }
-    }
-
-    private void scheduleWeatherNotifications() {
-        NotificationHelper notificationHelper = new NotificationHelper(getContext());
-        notificationHelper.scheduleWeatherNotifications(); // Scheduling weather notifications
     }
 
     private void logAndInsertWeatherData(ForecastData.Forecast forecast, ForecastData.City city) {

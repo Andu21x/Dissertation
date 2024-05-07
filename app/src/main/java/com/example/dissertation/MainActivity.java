@@ -1,3 +1,7 @@
+// Default MainActivity class that came with the starting framework from Android Studio
+// Almost nothing modified except for the R.id's used for telling the navigation
+// the locations it can go to
+
 package com.example.dissertation;
 
 import android.os.Bundle;
@@ -12,7 +16,6 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.example.dissertation.databinding.ActivityMainBinding;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.snackbar.Snackbar;
 
 public class MainActivity extends AppCompatActivity {
 
