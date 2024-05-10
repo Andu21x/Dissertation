@@ -4,6 +4,8 @@ The main build run is MainActivity.java, that's the one having the main function
 
 I used the default Pixel 3A for testing.
 
+Make sure to disable touchscreen on windows (I did it from Device Manager > Human Interface Devices > HID-compliant touch screen
+
 When filtering budget dates remember to set a day back and a day forward from your planned view (if planning to see budgets on the 07/05/2024 and 08/05/2024 then you need to filter by 06/05/2024 and 09/05/2024) (something I'm still wondering how to fix, but no more time)
 
 The task on click listener is sometimes buggy, which means you might have to go to a random date and back to the date you wanted to refresh tasks and get them to work. (something I'm still wondering how to fix, but no more time)
